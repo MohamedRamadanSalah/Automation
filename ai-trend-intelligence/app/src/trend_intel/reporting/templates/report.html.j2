@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    {% include_raw 'report.css' %}
+  </style>
+</head>
+<body>
+
+{# ── 1. COVER PAGE ── #}
+<div class="cover">
+  <div class="badge">Premium Research Report</div>
+  <h1>{{ title }}</h1>
+  <p class="subtitle">AI Trend Intelligence Platform</p>
+  <div class="meta">
+    Generated: {{ generated_at }}<br>
+    Run ID: {{ run_id }}<br>
+    Tools Analyzed: {{ tool_count }}<br>
+    Data Sources: {{ source_count }}
+  </div>
+</div>
+
+{# ── 2. EXECUTIVE SUMMARY ── #}
+<div class="section" id="executive-summary">
+  <h2>Executive Summary</h2>
+  {{ executive_summary | markdown }}
+</div>
+
+{# ── 3. TABLE OF CONTENTS ── #}
+<div class="toc section" id="table-of-contents">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#executive-summary">Executive Summary</a></li>
+    <li><a href="#trend-analysis">Trend Analysis</a></li>
+    <li><a href="#tool-profiles">Tool Profiles</a></li>
+    <li><a href="#rankings">Rankings</a></li>
+    <li><a href="#recommendations">Recommendations</a></li>
+    <li><a href="#conclusions">Conclusions</a></li>
+  </ol>
+</div>
+
+{# ── 4. TREND ANALYSIS ── #}
+<div class="section" id="trend-analysis">
+  <h2>Trend Analysis</h2>
+  {{ trend_analysis | markdown }}
+</div>
+
+{# ── 5. TOOL PROFILES ── #}
+<div class="section" id="tool-profiles">
+  <h2>Tool Profiles</h2>
+  {% for profile in tool_profiles %}
+  <div class="tool-card">
+    <div class="tool-name">#{{ loop.index }}. {{ profile.canonical_name }}</div>
+    <span class="score-badge">Score: {{ profile.score }}</span>
+    <p><strong>Category:</strong> {{ profile.category or "Technology" }}</p>
+    <p>{{ profile.research_summary }}</p>
+    {% if profile.technical_strengths %}
+    <p><strong>Key Strengths:</strong></p>
+    <ul>{% for s in profile.technical_strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if profile.technical_weaknesses %}
+    <p><strong>Limitations:</strong></p>
+    <ul>{% for w in profile.technical_weaknesses %}<li>{{ w }}</li>{% endfor %}</ul>
+    {% endif %}
+    <p><em>{{ profile.trend_rationale }}</em></p>
+    {% if profile.homepage_url %}
+    <p>More: <a href="{{ profile.homepage_url }}">{{ profile.homepage_url }}</a></p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# ── 6. RANKINGS ── #}
+<div class="section" id="rankings">
+  <h2>Rankings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Tool</th>
+        <th>Score</th>
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in rankings %}
+      <tr>
+        <td>{{ entry.rank }}</td>
+        <td>{{ entry.canonical_name }}</td>
+        <td>{{ entry.score }}</td>
+        <td>{{ entry.category or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── 7. RECOMMENDATIONS ── #}
+<div class="section" id="recommendations">
+  <h2>Recommendations</h2>
+  {{ recommendations | markdown }}
+</div>
+
+{# ── 8. CONCLUSIONS ── #}
+<div class="section" id="conclusions">
+  <h2>Conclusions</h2>
+  {{ conclusions | markdown }}
+</div>
+
+</body>
+</html>

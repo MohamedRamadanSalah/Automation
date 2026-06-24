@@ -1,0 +1,138 @@
+{
+  "name": "trend-intelligence-run",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "weeks", "weeksInterval": 1 }] }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "path": "trend-run",
+        "options": { "responseMode": "onReceived" }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 460],
+      "webhookId": "trend-run"
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/runs",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "trigger_type", "value": "={{ $json.trigger_type || 'scheduled' }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "create-run",
+      "name": "Create Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 380],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/runs/{{ $json.id }}/discover",
+        "method": "POST",
+        "options": { "timeout": 120000 }
+      },
+      "id": "discover",
+      "name": "Discover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 380],
+      "retryOnFail": true,
+      "maxTries": 1
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/runs/{{ $('Create Run').item.json.id }}/validate",
+        "method": "POST",
+        "options": { "timeout": 60000 }
+      },
+      "id": "validate",
+      "name": "Validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 380],
+      "retryOnFail": true,
+      "maxTries": 1
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/runs/{{ $('Create Run').item.json.id }}/analyze",
+        "method": "POST",
+        "options": { "timeout": 900000 }
+      },
+      "id": "analyze",
+      "name": "Analyze",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 380],
+      "retryOnFail": true,
+      "maxTries": 1
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/runs/{{ $('Create Run').item.json.id }}/report",
+        "method": "POST",
+        "options": { "timeout": 300000 }
+      },
+      "id": "report",
+      "name": "Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 380],
+      "retryOnFail": true,
+      "maxTries": 1
+    },
+    {
+      "parameters": {
+        "url": "=http://api:8000/runs/{{ $('Create Run').item.json.id }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "status-check",
+      "name": "Status Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 380],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "message": "=Trend report completed. Run {{ $json.id }}, outcome: {{ $json.outcome }}, report_id: {{ $json.report_id }}"
+      },
+      "id": "notify-success",
+      "name": "Notify Success",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1780, 380]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Create Run", "type": "main", "index": 0 }]] },
+    "Webhook Trigger":  { "main": [[{ "node": "Create Run", "type": "main", "index": 0 }]] },
+    "Create Run":       { "main": [[{ "node": "Discover",  "type": "main", "index": 0 }]] },
+    "Discover":         { "main": [[{ "node": "Validate",  "type": "main", "index": 0 }]] },
+    "Validate":         { "main": [[{ "node": "Analyze",   "type": "main", "index": 0 }]] },
+    "Analyze":          { "main": [[{ "node": "Report",    "type": "main", "index": 0 }]] },
+    "Report":           { "main": [[{ "node": "Status Check", "type": "main", "index": 0 }]] },
+    "Status Check":     { "main": [[{ "node": "Notify Success", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "errorWorkflow": "" },
+  "staticData": null,
+  "tags": [{ "name": "trend-intelligence" }]
+}

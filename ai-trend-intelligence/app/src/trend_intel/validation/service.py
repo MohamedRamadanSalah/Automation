@@ -16,6 +16,18 @@ from trend_intel.models.tools import Tool
 log = get_logger(__name__)
 
 
+def _fuzzy_match(norm: str, seen: dict[str, "Tool"], threshold: int = 90) -> str | None:
+    """Return the matching key from seen if rapidfuzz token_sort_ratio >= threshold."""
+    try:
+        from rapidfuzz.fuzz import token_sort_ratio
+        for key in seen:
+            if token_sort_ratio(norm, key) >= threshold:
+                return key
+    except Exception:
+        pass
+    return None
+
+
 def normalize_name(name: str) -> str:
     """Lowercase, strip punctuation — canonical dedup key."""
     return re.sub(r"[^a-z0-9]", "", name.lower())
@@ -57,7 +69,10 @@ async def validate_candidates(
             excluded.append(c)
             continue
 
-        # Exact-normalized dedup (MVP; upgraded to fuzzy in T047)
+        # Normalized + rapidfuzz fuzzy dedup (FR-004, token_sort_ratio ≥ 90)
+        matched_key = _fuzzy_match(norm, seen_normalized, threshold=90)
+        if matched_key is not None:
+            norm = matched_key
         if norm in seen_normalized:
             existing_tool = seen_normalized[norm]
             existing_tool.source_refs = [*(existing_tool.source_refs or []), {"source": c.source_id and str(c.source_id), "url": c.url}]

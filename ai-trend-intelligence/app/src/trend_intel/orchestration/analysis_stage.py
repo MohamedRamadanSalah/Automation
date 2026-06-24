@@ -10,7 +10,11 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from trend_intel.agents.comparison_agent import ComparisonAgent
+from trend_intel.agents.ranking_agent import RankingAgent
 from trend_intel.agents.research_agent import ResearchAgent
+from trend_intel.agents.technical_agent import TechnicalAgent
+from trend_intel.agents.trend_agent import TrendAgent
 from trend_intel.core.logging import get_logger
 from trend_intel.core.scoring import SCORING_VERSION, compute_score, popularity_from_signals
 from trend_intel.models.candidates import Candidate
@@ -40,7 +44,11 @@ async def run_analyze(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
     concurrency: int = config.get("agent_concurrency", 3)
     sem = asyncio.Semaphore(concurrency)
 
-    agent = ResearchAgent()
+    research_agent = ResearchAgent()
+    trend_agent = TrendAgent()
+    technical_agent = TechnicalAgent()
+    comparison_agent = ComparisonAgent()
+    ranking_agent = RankingAgent()
     profiles_created = 0
     analysis_gaps: list[str] = []
 
@@ -51,55 +59,72 @@ async def run_analyze(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
             if tool is None:
                 return None
 
-            # Get candidates for context
             cands = [c for c in candidates if c.tool_id == tool_id]
-            signals = {}
+            signals: dict = {}
             for c in cands:
                 signals.update(c.raw_signals or {})
 
-            user_content = json.dumps({
+            base_input = json.dumps({
                 "tool": {"canonical_name": tool.canonical_name, "url": tool.homepage_url, "source_refs": tool.source_refs, "raw_signals": signals},
-                "collected_text": f"Tool: {tool.canonical_name}. URL: {tool.homepage_url}. Trending on: {[c.raw_signals for c in cands[:3]]}"
+                "collected_text": f"Tool: {tool.canonical_name}. URL: {tool.homepage_url}.",
             })
 
-            research = await agent.run_safe(user_content)
+            gaps: list[str] = []
+            research = await research_agent.run_safe(base_input)
             if research is None:
-                analysis_gaps.append(str(tool_id))
-                log.warning("research_failed_isolated", tool_id=str(tool_id))
-                # Create minimal profile with gaps noted
+                gaps.append("research_agent_failed")
+
+            research_ctx = json.dumps({"research": research.model_dump() if research else {}, "signals": signals})
+            trend = await trend_agent.run_safe(research_ctx)
+            if trend is None:
+                gaps.append("trend_agent_failed")
+
+            technical = await technical_agent.run_safe(base_input + f"\nResearch: {research.model_dump() if research else {}}")
+            if technical is None:
+                gaps.append("technical_agent_failed")
+
+            comparison = await comparison_agent.run_safe(base_input)
+            if comparison is None:
+                gaps.append("comparison_agent_failed")
+
+            # Ranking agent uses all prior outputs to produce per-dimension values
+            ranking_input = json.dumps({
+                "tool": tool.canonical_name,
+                "research": research.model_dump() if research else {},
+                "trend": trend.model_dump() if trend else {},
+                "technical": technical.model_dump() if technical else {},
+                "comparison": comparison.model_dump() if comparison else {},
+                "signals": signals,
+            })
+            ranking_out = await ranking_agent.run_safe(ranking_input)
+
+            if ranking_out:
+                score, components = compute_score(
+                    popularity_0_100=ranking_out.popularity_0_100,
+                    momentum_0_100=ranking_out.momentum_0_100,
+                    technical_merit_0_100=ranking_out.technical_merit_0_100,
+                    source_credibility_0_100=ranking_out.source_credibility_0_100,
+                )
+            else:
+                gaps.append("ranking_agent_failed")
                 pop_score = popularity_from_signals(signals)
                 score, components = compute_score(popularity_0_100=pop_score)
-                profile = ToolProfile(
-                    report_id=uuid.uuid4(),  # placeholder — will be updated at report stage
-                    tool_id=tool_id,
-                    research_summary="[Analysis unavailable]",
-                    trend_rationale="[Analysis unavailable]",
-                    score=score,
-                    score_components=components,
-                    scoring_method_version=SCORING_VERSION,
-                    analysis_gaps=["research_agent_failed"],
-                )
-                return profile
 
-            pop_score = popularity_from_signals(signals)
-            tech_merit = 50.0
-            score, components = compute_score(
-                popularity_0_100=pop_score,
-                momentum_0_100=50.0,
-                technical_merit_0_100=tech_merit,
-                source_credibility_0_100=60.0,
-            )
+            if gaps:
+                analysis_gaps.extend([f"{tool.canonical_name}:{g}" for g in gaps])
 
             profile = ToolProfile(
                 report_id=uuid.uuid4(),  # placeholder — updated at report stage
                 tool_id=tool_id,
-                research_summary=research.summary,
-                trend_rationale=f"Trending in {research.category}",
-                technical_strengths=research.key_features,
-                technical_weaknesses=[],
+                research_summary=research.summary if research else "[Analysis unavailable]",
+                trend_rationale=trend.trend_rationale if trend else "[Analysis unavailable]",
+                technical_strengths=technical.strengths if technical else (research.key_features if research else []),
+                technical_weaknesses=technical.weaknesses if technical else [],
+                comparison=comparison.model_dump() if comparison else {},
                 score=score,
                 score_components=components,
                 scoring_method_version=SCORING_VERSION,
+                analysis_gaps=gaps,
             )
             return profile
 

@@ -68,24 +68,24 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T023 [P] [US1] Contract test for `POST /runs` and `GET /runs/{id}` in `app/tests/contract/test_runs.py`
-- [ ] T024 [P] [US1] Contract test for stage endpoints (discover/validate/analyze/report) in `app/tests/contract/test_stages.py`
-- [ ] T025 [P] [US1] Integration test: end-to-end run produces a report with all 8 sections + a PDF file (OpenRouter mocked via respx) in `app/tests/integration/test_e2e_report.py`. MUST also assert **both** trigger paths work: a `trigger_type=manual` run and a `trigger_type=scheduled` run each create a run and reach `succeeded` (FR-016).
+- [x] T023 [P] [US1] Contract test for `POST /runs` and `GET /runs/{id}` in `app/tests/contract/test_runs.py`
+- [x] T024 [P] [US1] Contract test for stage endpoints (discover/validate/analyze/report) in `app/tests/contract/test_stages.py`
+- [x] T025 [P] [US1] Integration test: end-to-end run produces a report with all 8 sections + a PDF file (OpenRouter mocked via respx) in `app/tests/integration/test_e2e_report.py`. MUST also assert **both** trigger paths work: a `trigger_type=manual` run and a `trigger_type=scheduled` run each create a run and reach `succeeded` (FR-016).
 
 ### Implementation for User Story 1
 
-- [ ] T026 [P] [US1] Implement `app/src/trend_intel/discovery/base.py` — `SourceAdapter` protocol + `CandidateDTO`
-- [ ] T027 [P] [US1] Implement `app/src/trend_intel/discovery/sources/hackernews.py` — HN Firebase API adapter
-- [ ] T028 [US1] Implement discovery service + `POST /runs/{run_id}/discover` in `app/src/trend_intel/api/stages.py` (persist candidates, record skipped sources) — depends on T026, T027, T021
-- [ ] T029 [US1] Implement minimal validation (name normalization + exact-normalized dedup + popularity threshold) in `app/src/trend_intel/validation/service.py` + wire `POST /runs/{run_id}/validate` (terminate `no_trends` if empty, FR-026)
-- [ ] T030 [P] [US1] Implement `app/src/trend_intel/agents/research_agent.py` per contracts/agents.md — depends on T022
-- [ ] T031 [P] [US1] Implement `app/src/trend_intel/agents/report_writer_agent.py` per contracts/agents.md — depends on T022
-- [ ] T032 [US1] Implement `app/src/trend_intel/core/scoring.py` with a basic raw-popularity ranking (placeholder for US3 composite) + ranking persistence
-- [ ] T033 [US1] Implement analyze stage (per-tool Research + ranking) + `POST /runs/{run_id}/analyze` in `app/src/trend_intel/api/stages.py` — depends on T030, T032
-- [ ] T034 [P] [US1] Create premium templates `app/src/trend_intel/reporting/templates/report.html.j2` + `report.css` (CSS paged media: cover page, generated TOC via target-counter, running headers/footers, per-section page breaks, all 8 sections, FR-013)
-- [ ] T035 [US1] Implement `reporting/markdown.py` (assemble ordered Markdown) + `reporting/pdf.py` (WeasyPrint render; retain MD on PDF failure, FR-014) — depends on T034, T031
-- [ ] T036 [US1] Implement report stage: assemble MD + single quality-review pass + PDF + persist `reports`/`tool_profiles`/`rankings` + write files to `storage/reports/{run_id}/` + `POST /runs/{run_id}/report`, `GET /reports/{id}`, `GET /reports/{id}/pdf` — depends on T035, T033
-- [ ] T037 [US1] Author n8n workflow `n8n/workflows/trend-intelligence-run.json` (schedule + manual webhook → stage calls with error branches) per contracts/n8n-workflow.md + import instructions in README
+- [x] T026 [P] [US1] Implement `app/src/trend_intel/discovery/base.py` — `SourceAdapter` protocol + `CandidateDTO`
+- [x] T027 [P] [US1] Implement `app/src/trend_intel/discovery/sources/hackernews.py` — HN Firebase API adapter
+- [x] T028 [US1] Implement discovery service + `POST /runs/{run_id}/discover` in `app/src/trend_intel/api/stages.py` (persist candidates, record skipped sources) — depends on T026, T027, T021
+- [x] T029 [US1] Implement minimal validation (name normalization + exact-normalized dedup + popularity threshold) in `app/src/trend_intel/validation/service.py` + wire `POST /runs/{run_id}/validate` (terminate `no_trends` if empty, FR-026)
+- [x] T030 [P] [US1] Implement `app/src/trend_intel/agents/research_agent.py` per contracts/agents.md — depends on T022
+- [x] T031 [P] [US1] Implement `app/src/trend_intel/agents/report_writer_agent.py` per contracts/agents.md — depends on T022
+- [x] T032 [US1] Implement `app/src/trend_intel/core/scoring.py` with a basic raw-popularity ranking (placeholder for US3 composite) + ranking persistence
+- [x] T033 [US1] Implement analyze stage (per-tool Research + ranking) + `POST /runs/{run_id}/analyze` in `app/src/trend_intel/api/stages.py` — depends on T030, T032
+- [x] T034 [P] [US1] Create premium templates `app/src/trend_intel/reporting/templates/report.html.j2` + `report.css` (CSS paged media: cover page, generated TOC via target-counter, running headers/footers, per-section page breaks, all 8 sections, FR-013)
+- [x] T035 [US1] Implement `reporting/markdown.py` (assemble ordered Markdown) + `reporting/pdf.py` (WeasyPrint render; retain MD on PDF failure, FR-014) — depends on T034, T031
+- [x] T036 [US1] Implement report stage: assemble MD + single quality-review pass + PDF + persist `reports`/`tool_profiles`/`rankings` + write files to `storage/reports/{run_id}/` + `POST /runs/{run_id}/report`, `GET /reports/{id}`, `GET /reports/{id}/pdf` — depends on T035, T033
+- [x] T037 [US1] Author n8n workflow `n8n/workflows/trend-intelligence-run.json` (schedule + manual webhook → stage calls with error branches) per contracts/n8n-workflow.md + import instructions in README
 
 **Checkpoint**: MVP — one trigger yields a complete premium report end-to-end (SC-001, SC-002, SC-003).
 
@@ -99,20 +99,20 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T038 [P] [US2] Unit test for normalized+fuzzy dedup (`Tool.ai`/`Tool AI`/`tool-ai` collapse) in `app/tests/unit/test_dedup.py`
-- [ ] T039 [P] [US2] Integration test: multi-source discovery + dedup + resilience to a failing source in `app/tests/integration/test_discovery_validation.py`
+- [x] T038 [P] [US2] Unit test for normalized+fuzzy dedup (`Tool.ai`/`Tool AI`/`tool-ai` collapse) in `app/tests/unit/test_dedup.py`
+- [x] T039 [P] [US2] Integration test: multi-source discovery + dedup + resilience to a failing source in `app/tests/integration/test_discovery_validation.py`
 
 ### Implementation for User Story 2
 
-- [ ] T040 [P] [US2] Implement `app/src/trend_intel/discovery/registry.py` — config-driven adapter loading from `discovery_sources` (FR-023)
-- [ ] T041 [P] [US2] Implement `app/src/trend_intel/discovery/sources/github.py` — GitHub Search API trending adapter
-- [ ] T042 [P] [US2] Implement `app/src/trend_intel/discovery/sources/reddit.py` — Reddit OAuth API adapter
-- [ ] T043 [P] [US2] Implement `app/src/trend_intel/discovery/sources/devto.py` — Dev.to Forem API adapter
-- [ ] T044 [P] [US2] Implement `app/src/trend_intel/discovery/sources/producthunt.py` — Product Hunt GraphQL adapter
-- [ ] T045 [P] [US2] Implement `app/src/trend_intel/discovery/sources/rss.py` — feedparser adapter for Medium/tech-blogs/AI-news feeds
-- [ ] T046 [US2] Implement `app/src/trend_intel/collection/fetch.py` — httpx fetch + trafilatura article extraction + selectolax parsing + robots.txt check + per-source rate limiting (R5, R12)
-- [ ] T047 [US2] Upgrade `validation/service.py` to full pipeline: rapidfuzz normalized+fuzzy dedup + URL/domain match (FR-004), quality checks, source verification, popularity threshold (FR-006), and exclusion-reason recording (FR-005) — depends on T046
-- [ ] T048 [US2] Make discovery resilient: per-source timeout + `asyncio.gather(return_exceptions=True)` + populate `runs.skipped_sources` (FR-002) — depends on T040, T028
+- [x] T040 [P] [US2] Implement `app/src/trend_intel/discovery/registry.py` — config-driven adapter loading from `discovery_sources` (FR-023)
+- [x] T041 [P] [US2] Implement `app/src/trend_intel/discovery/sources/github.py` — GitHub Search API trending adapter
+- [x] T042 [P] [US2] Implement `app/src/trend_intel/discovery/sources/reddit.py` — Reddit OAuth API adapter
+- [x] T043 [P] [US2] Implement `app/src/trend_intel/discovery/sources/devto.py` — Dev.to Forem API adapter
+- [x] T044 [P] [US2] Implement `app/src/trend_intel/discovery/sources/producthunt.py` — Product Hunt GraphQL adapter
+- [x] T045 [P] [US2] Implement `app/src/trend_intel/discovery/sources/rss.py` — feedparser adapter for Medium/tech-blogs/AI-news feeds
+- [x] T046 [US2] Implement `app/src/trend_intel/collection/fetch.py` — httpx fetch + trafilatura article extraction + selectolax parsing + robots.txt check + per-source rate limiting (R5, R12)
+- [x] T047 [US2] Upgrade `validation/service.py` to full pipeline: rapidfuzz normalized+fuzzy dedup + URL/domain match (FR-004), quality checks, source verification, popularity threshold (FR-006), and exclusion-reason recording (FR-005) — depends on T046
+- [x] T048 [US2] Make discovery resilient: per-source timeout + `asyncio.gather(return_exceptions=True)` + populate `runs.skipped_sources` (FR-002) — depends on T040, T028
 
 **Checkpoint**: Trustworthy, deduplicated, multi-source validated input (SC-005, SC-006, SC-007).
 
@@ -126,19 +126,19 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T049 [P] [US3] Unit test for the 4-dimension weighted composite scoring + version tag in `app/tests/unit/test_scoring.py`
-- [ ] T050 [P] [US3] Integration test: full agent fan-out + bounded review loop + per-tool failure isolation (OpenRouter mocked) in `app/tests/integration/test_analysis.py`
+- [x] T049 [P] [US3] Unit test for the 4-dimension weighted composite scoring + version tag in `app/tests/unit/test_scoring.py`
+- [x] T050 [P] [US3] Integration test: full agent fan-out + bounded review loop + per-tool failure isolation (OpenRouter mocked) in `app/tests/integration/test_analysis.py`
 
 ### Implementation for User Story 3
 
-- [ ] T051 [P] [US3] Implement `app/src/trend_intel/agents/trend_agent.py` per contracts/agents.md
-- [ ] T052 [P] [US3] Implement `app/src/trend_intel/agents/technical_agent.py` per contracts/agents.md
-- [ ] T053 [P] [US3] Implement `app/src/trend_intel/agents/comparison_agent.py` per contracts/agents.md
-- [ ] T054 [P] [US3] Implement `app/src/trend_intel/agents/ranking_agent.py` (per-dimension 0–100 values) per contracts/agents.md
-- [ ] T055 [P] [US3] Implement `app/src/trend_intel/agents/quality_reviewer_agent.py` per contracts/agents.md
-- [ ] T056 [US3] Replace placeholder scoring in `core/scoring.py` with the versioned weighted composite over the four dimensions, persisting `score_components` + `scoring_method_version` (FR-008, R8) — depends on T054
-- [ ] T057 [US3] Upgrade analyze stage to full per-tool fan-out (Research→Trend→Technical→Comparison→Ranking) under `asyncio.Semaphore(AGENT_CONCURRENCY)` with per-tool failure isolation → `analysis_gaps` (FR-011) — depends on T051–T054, T056
-- [ ] T058 [US3] Upgrade report stage with the bounded Quality-Reviewer revise→re-review loop (up to `REVIEW_MAX_ATTEMPTS`) persisting unresolved notes to `reports.review_notes` (FR-010) — depends on T055, T036
+- [x] T051 [P] [US3] Implement `app/src/trend_intel/agents/trend_agent.py` per contracts/agents.md
+- [x] T052 [P] [US3] Implement `app/src/trend_intel/agents/technical_agent.py` per contracts/agents.md
+- [x] T053 [P] [US3] Implement `app/src/trend_intel/agents/comparison_agent.py` per contracts/agents.md
+- [x] T054 [P] [US3] Implement `app/src/trend_intel/agents/ranking_agent.py` (per-dimension 0–100 values) per contracts/agents.md
+- [x] T055 [P] [US3] Implement `app/src/trend_intel/agents/quality_reviewer_agent.py` per contracts/agents.md
+- [x] T056 [US3] Replace placeholder scoring in `core/scoring.py` with the versioned weighted composite over the four dimensions, persisting `score_components` + `scoring_method_version` (FR-008, R8) — depends on T054
+- [x] T057 [US3] Upgrade analyze stage to full per-tool fan-out (Research→Trend→Technical→Comparison→Ranking) under `asyncio.Semaphore(AGENT_CONCURRENCY)` with per-tool failure isolation → `analysis_gaps` (FR-011) — depends on T051–T054, T056
+- [x] T058 [US3] Upgrade report stage with the bounded Quality-Reviewer revise→re-review loop (up to `REVIEW_MAX_ATTEMPTS`) persisting unresolved notes to `reports.review_notes` (FR-010) — depends on T055, T036
 
 **Checkpoint**: Premium analytical depth + reproducible ranking + self-correcting quality (SC-004, SC-010, SC-012).
 
