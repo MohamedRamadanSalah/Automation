@@ -196,7 +196,7 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 - [x] T074 Security hardening: localhost-only port binding, non-root container, URL scheme allowlist + fetch size caps, n8n basic auth (R12)
 - [x] T075 [P] Verify DB indexes from data-model.md exist; tune `AGENT_CONCURRENCY` defaults (R11)
 - [x] T076 Ensure structured logging + `run_steps` detail coverage across all stages (SC-013)
-- [ ] T077 Execute all quickstart.md scenarios A–H and record outcomes
+- [x] T077 Execute all quickstart.md scenarios A–H and record outcomes
 - [x] T078 [P] Additional unit tests for source adapters (parsing fixtures) in `app/tests/unit/test_adapters.py`
 
 ---

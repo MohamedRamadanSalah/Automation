@@ -9,6 +9,7 @@ import httpx
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -54,7 +55,7 @@ class HackerNewsAdapter:
                                 url=url or None,
                                 canonical_domain=domain,
                                 raw_signals={"score": score, "comments": item.get("descendants", 0), "hn_id": story_id},
-                                discovered_at=datetime.fromtimestamp(item.get("time", 0), tz=timezone.utc),
+                                discovered_at=datetime.fromtimestamp(item.get("time", 0), tz=timezone.utc).replace(tzinfo=None),
                             )
                         )
                     except Exception as exc:
