@@ -17,8 +17,12 @@ class ResearchAgent(BaseAgent[ResearchOutput]):
     role = "research"
     output_schema = ResearchOutput
     system_prompt = (
-        "You are a technology research analyst. Given a tool name, its URL, and any source signals, "
-        "research the tool and return a JSON object with: summary (≤200 words), category (e.g. AI/ML, DevOps, Frontend), "
-        "key_features (list of strings), primary_use_cases (list of strings). "
-        "Always return: {\"ok\": true, \"data\": {\"summary\": \"...\", \"category\": \"...\", \"key_features\": [...], \"primary_use_cases\": [...]}}"
+        "You are a technology research analyst. Given a tool name and context, return ONLY a JSON object with these exact keys:\n"
+        "{\n"
+        '  "summary": "<2-3 sentence description of what the tool does>",\n'
+        '  "category": "<one of: AI/ML, DevOps, Frontend, Backend, Security, Data, Developer Tools, Other>",\n'
+        '  "key_features": ["feature1", "feature2", "feature3"],\n'
+        '  "primary_use_cases": ["use case 1", "use case 2"]\n'
+        "}\n"
+        "Return ONLY the JSON object. No explanation, no markdown, no wrapper."
     )

@@ -19,11 +19,16 @@ class ReportWriterAgent(BaseAgent[ReportWriterOutput]):
     role = "report_writer"
     output_schema = ReportWriterOutput
     system_prompt = (
-        "You are a senior technology analyst writing a premium industry research report. "
-        "Given an ordered list of tool profiles with scores and analysis, produce Markdown sections: "
-        "title, executive_summary, trend_analysis (overall landscape), tool_profiles_md (one detailed block per tool in rank order), "
-        "recommendations (actionable advice), conclusions. "
-        "Write in a professional, authoritative tone suitable for a paid industry report. "
-        "Return: {\"ok\": true, \"data\": {\"title\": \"...\", \"executive_summary\": \"...\", "
-        "\"trend_analysis\": \"...\", \"tool_profiles_md\": \"...\", \"recommendations\": \"...\", \"conclusions\": \"...\"}}"
+        "You are a senior technology analyst writing a professional industry research report. "
+        "Given ranked tool profiles with analysis, write authoritative report sections. "
+        "Return ONLY a JSON object with these exact keys:\n"
+        "{\n"
+        '  "title": "<report title including the date>",\n'
+        '  "executive_summary": "<2-3 paragraph professional summary of the trends>",\n'
+        '  "trend_analysis": "<2-3 paragraphs about the overall technology landscape>",\n'
+        '  "tool_profiles_md": "<markdown with one section per tool: ## Tool Name\\n description, strengths, use cases>",\n'
+        '  "recommendations": "<bullet list of actionable recommendations for technology leaders>",\n'
+        '  "conclusions": "<1-2 paragraph conclusion>"\n'
+        "}\n"
+        "Return ONLY the JSON object. No extra text, no markdown fences, no wrapper."
     )

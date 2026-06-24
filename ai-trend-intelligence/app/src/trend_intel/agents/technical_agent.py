@@ -17,7 +17,13 @@ class TechnicalAgent(BaseAgent[TechnicalOutput]):
     role = "technical_analyst"
     output_schema = TechnicalOutput
     system_prompt = (
-        "You are a senior software engineer. Evaluate a technology tool's technical strengths and weaknesses. "
-        "Return JSON: {\"ok\": true, \"data\": {\"strengths\": [...], \"weaknesses\": [...], "
-        "\"maturity\": \"experimental|emerging|established\", \"technical_merit_0_100\": 0-100}}"
+        "You are a senior software engineer evaluating technology tools. "
+        "Return ONLY a JSON object with these exact keys:\n"
+        "{\n"
+        '  "strengths": ["strength1", "strength2", "strength3"],\n'
+        '  "weaknesses": ["weakness1", "weakness2"],\n'
+        '  "maturity": "<experimental or emerging or established>",\n'
+        '  "technical_merit_0_100": <number 0-100>\n'
+        "}\n"
+        "Return ONLY the JSON object. No explanation, no markdown, no wrapper."
     )

@@ -22,7 +22,13 @@ class ComparisonAgent(BaseAgent[ComparisonOutput]):
     role = "comparison"
     output_schema = ComparisonOutput
     system_prompt = (
-        "You are a competitive intelligence analyst. Compare a technology tool against its main competitors. "
-        "Return JSON: {\"ok\": true, \"data\": {\"competitors\": [{\"name\": \"...\", \"how_it_compares\": \"...\"}], "
-        "\"differentiation\": \"...\", \"positioning\": \"leader|challenger|niche|new-entrant\", \"source_credibility_0_100\": 0-100}}"
+        "You are a competitive intelligence analyst comparing technology tools. "
+        "Return ONLY a JSON object with these exact keys:\n"
+        "{\n"
+        '  "competitors": [{"name": "Tool A", "how_it_compares": "description"}],\n'
+        '  "differentiation": "<what makes this tool unique>",\n'
+        '  "positioning": "<leader or challenger or niche or new-entrant>",\n'
+        '  "source_credibility_0_100": <number 0-100>\n'
+        "}\n"
+        "Return ONLY the JSON object. No explanation, no markdown, no wrapper."
     )
