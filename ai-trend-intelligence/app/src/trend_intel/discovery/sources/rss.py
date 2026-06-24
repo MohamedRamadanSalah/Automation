@@ -1,7 +1,6 @@
 """RSS/Atom adapter — Medium, tech blogs, AI news (T045)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -9,6 +8,7 @@ import feedparser
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -46,7 +46,7 @@ class RSSAdapter:
                             url=url,
                             canonical_domain=domain,
                             raw_signals={"feed": feed_url, "source_domain": domain},
-                            discovered_at=datetime.now(timezone.utc),
+                            discovered_at=utcnow(),
                         ))
                 except Exception as exc:
                     log.warning("rss_entry_error", feed=feed_url, error=str(exc))

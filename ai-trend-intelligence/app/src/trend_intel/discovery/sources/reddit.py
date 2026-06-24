@@ -1,7 +1,6 @@
 """Reddit OAuth API adapter (T042)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -9,6 +8,7 @@ import httpx
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -65,7 +65,7 @@ class RedditAdapter:
                                 url=url or None,
                                 canonical_domain=urlparse(url).netloc if url else None,
                                 raw_signals={"score": d.get("score", 0), "comments": d.get("num_comments", 0), "subreddit": sub},
-                                discovered_at=datetime.now(timezone.utc),
+                                discovered_at=utcnow(),
                             ))
                     except Exception as exc:
                         log.warning("reddit_sub_error", sub=sub, error=str(exc))

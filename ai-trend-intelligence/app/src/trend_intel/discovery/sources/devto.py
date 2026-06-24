@@ -1,7 +1,6 @@
 """Dev.to Forem API adapter (T043)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -9,6 +8,7 @@ import httpx
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -40,7 +40,7 @@ class DevToAdapter:
                                 url=url,
                                 canonical_domain="dev.to",
                                 raw_signals={"reactions": article.get("public_reactions_count", 0), "comments": article.get("comments_count", 0), "tag": tag},
-                                discovered_at=datetime.now(timezone.utc),
+                                discovered_at=utcnow(),
                             ))
                     except Exception as exc:
                         log.warning("devto_tag_error", tag=tag, error=str(exc))

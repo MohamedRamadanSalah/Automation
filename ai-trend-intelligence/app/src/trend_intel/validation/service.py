@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.models.candidates import Candidate
 from trend_intel.models.tools import Tool
 
@@ -51,7 +51,7 @@ async def validate_candidates(
     seen_normalized: dict[str, Tool] = {}
     tools: list[Tool] = []
     excluded: list[Candidate] = []
-    now = datetime.now(timezone.utc)
+    now = utcnow()
 
     for c in candidates:
         # Popularity threshold

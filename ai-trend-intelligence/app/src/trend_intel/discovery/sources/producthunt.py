@@ -1,13 +1,13 @@
 """Product Hunt GraphQL adapter (T044)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 import httpx
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -55,7 +55,7 @@ class ProductHuntAdapter:
                         url=edge["node"].get("website") or edge["node"].get("url"),
                         canonical_domain=None,
                         raw_signals={"votes": edge["node"].get("votesCount", 0)},
-                        discovered_at=datetime.now(timezone.utc),
+                        discovered_at=utcnow(),
                     )
                     for edge in edges
                 ]

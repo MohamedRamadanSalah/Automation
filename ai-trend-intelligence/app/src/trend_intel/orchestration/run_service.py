@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from trend_intel.core.errors import NotFoundError, RunStateError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.models.run_steps import RunStep
 from trend_intel.models.runs import Run
 from trend_intel.schemas.runs import RunCreate, RunStatus
@@ -63,7 +63,7 @@ async def transition_run(session: AsyncSession, run: Run, new_status: str, *, fa
     if new_status not in allowed:
         raise RunStateError(f"Cannot transition run from '{run.status}' to '{new_status}'")
     run.status = new_status
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     if new_status == RunStatus.DISCOVERING:
         run.started_at = now
     if new_status in TERMINAL_STATUSES:
@@ -78,7 +78,7 @@ async def transition_run(session: AsyncSession, run: Run, new_status: str, *, fa
 
 
 async def start_step(session: AsyncSession, run_id: uuid.UUID, step: str) -> RunStep:
-    rs = RunStep(run_id=run_id, step=step, status="running", started_at=datetime.now(timezone.utc))
+    rs = RunStep(run_id=run_id, step=step, status="running", started_at=utcnow())
     session.add(rs)
     await session.flush()
     return rs
@@ -86,7 +86,7 @@ async def start_step(session: AsyncSession, run_id: uuid.UUID, step: str) -> Run
 
 async def finish_step(session: AsyncSession, run_step: RunStep, *, detail: dict[str, Any] | None = None) -> RunStep:
     run_step.status = "succeeded"
-    run_step.finished_at = datetime.now(timezone.utc)
+    run_step.finished_at = utcnow()
     if detail:
         run_step.detail = detail
     await session.flush()
@@ -95,7 +95,7 @@ async def finish_step(session: AsyncSession, run_step: RunStep, *, detail: dict[
 
 async def fail_step(session: AsyncSession, run_step: RunStep, error_message: str, *, detail: dict[str, Any] | None = None) -> RunStep:
     run_step.status = "failed"
-    run_step.finished_at = datetime.now(timezone.utc)
+    run_step.finished_at = utcnow()
     run_step.detail = {**(detail or {}), "error": error_message}
     await session.flush()
     return run_step

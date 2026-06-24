@@ -1,7 +1,8 @@
 """GitHub Search API trending adapter (T041)."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -9,6 +10,7 @@ import httpx
 
 from trend_intel.core.errors import SourceError
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.discovery.base import CandidateDTO
 
 log = get_logger(__name__)
@@ -43,7 +45,7 @@ class GitHubAdapter:
                         url=item.get("html_url"),
                         canonical_domain="github.com",
                         raw_signals={"stars": item.get("stargazers_count", 0), "forks": item.get("forks_count", 0), "language": item.get("language", "")},
-                        discovered_at=datetime.now(timezone.utc),
+                        discovered_at=utcnow(),
                     )
                     for item in items
                 ]

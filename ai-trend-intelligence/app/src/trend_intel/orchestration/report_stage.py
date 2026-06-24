@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import select
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from trend_intel.agents.report_writer_agent import ReportWriterAgent
 from trend_intel.core.logging import get_logger
+from trend_intel.core.utils import utcnow
 from trend_intel.core.scoring import SCORING_VERSION
 from trend_intel.models.candidates import Candidate
 from trend_intel.models.rankings import Ranking
@@ -96,7 +96,7 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
                 writer_output = revised
                 draft_md = f"# {writer_output.title}\n\n{writer_output.executive_summary}"
 
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     title = writer_output.title if writer_output else f"Technology Trend Report — {now.strftime('%Y-%m-%d')}"
     exec_summary = writer_output.executive_summary if writer_output else "Premium trend analysis of top technologies."
     trend_analysis = writer_output.trend_analysis if writer_output else "Analysis in progress."

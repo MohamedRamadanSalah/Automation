@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trend_intel.core.errors import SourceError
+from trend_intel.core.utils import utcnow
 from trend_intel.core.logging import get_logger
 from trend_intel.discovery import registry
 from trend_intel.models.candidates import Candidate
@@ -54,7 +54,7 @@ async def run_discover(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
                     url=dto.url,
                     canonical_domain=dto.canonical_domain,
                     raw_signals=dto.raw_signals,
-                    discovered_at=dto.discovered_at or datetime.now(timezone.utc),
+                    discovered_at=dto.discovered_at or utcnow(),
                     validation_status="pending",
                 )
                 for dto in dtos

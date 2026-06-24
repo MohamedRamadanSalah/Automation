@@ -12,10 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Layer 1: install all dependencies (cache-busts only when pyproject.toml changes)
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e .
+RUN mkdir -p src/trend_intel && touch src/trend_intel/__init__.py \
+    && pip install --no-cache-dir . \
+    && rm -rf src/trend_intel
 
+# Layer 2: real source — re-install package only (deps already in layer 1)
 COPY src/ ./src/
+RUN pip install --no-cache-dir --no-deps .
+
+# Alembic config and migrations
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
 
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
 USER appuser
