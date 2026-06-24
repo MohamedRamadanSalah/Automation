@@ -18,6 +18,7 @@ class ReportWriterOutput(BaseModel):
 class ReportWriterAgent(BaseAgent[ReportWriterOutput]):
     role = "report_writer"
     output_schema = ReportWriterOutput
+    max_tokens = 2500
     system_prompt = (
         "You are a senior technology analyst writing a professional industry research report. "
         "Given ranked tool profiles with analysis, write authoritative report sections. "
