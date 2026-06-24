@@ -52,12 +52,12 @@ async def run_analyze(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
     profiles_created = 0
     analysis_gaps: list[str] = []
 
-    async def _analyze_tool(tool_id: uuid.UUID) -> ToolProfile | None:
+    async def _analyze_tool(tool_id: uuid.UUID) -> tuple[ToolProfile | None, dict]:
         async with sem:
             tool_result = await session.execute(select(Tool).where(Tool.id == tool_id))
             tool = tool_result.scalar_one_or_none()
             if tool is None:
-                return None
+                return None, {}
 
             cands = [c for c in candidates if c.tool_id == tool_id]
             signals: dict = {}
@@ -126,20 +126,43 @@ async def run_analyze(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
                 scoring_method_version=SCORING_VERSION,
                 analysis_gaps=gaps,
             )
-            return profile
+            extra = {
+                "category": research.category if research else None,
+                "key_features": research.key_features if research else [],
+                "primary_use_cases": research.primary_use_cases if research else [],
+                "drivers": trend.drivers if trend else [],
+                "momentum_assessment": trend.momentum_assessment if trend else "",
+                "evidence": trend.evidence if trend else [],
+                "weaknesses": technical.weaknesses if technical else [],
+                "maturity": technical.maturity if technical else "",
+                "competitors": [c.model_dump() for c in comparison.competitors] if comparison else [],
+                "differentiation": comparison.differentiation if comparison else "",
+                "positioning": comparison.positioning if comparison else "",
+                "justification": ranking_out.justification if ranking_out else "",
+            }
+            return profile, extra
 
     tool_ids_to_analyze = tool_ids[:top_n]
     results = await asyncio.gather(*[_analyze_tool(tid) for tid in tool_ids_to_analyze])
-    profiles = [p for p in results if p is not None]
+    pairs = [(p, e) for p, e in results if p is not None]
+    profiles = [p for p, _ in pairs]
+    extras_by_tid = {str(p.tool_id): e for p, e in pairs}
 
     # Sort by score descending and store temporarily (report_id set in report stage)
     profiles.sort(key=lambda p: float(p.score), reverse=True)
 
     # Persist analysis context in run metadata for report stage
     run.config_snapshot = {**run.config_snapshot, "_analysis_profiles": [
-        {"tool_id": str(p.tool_id), "score": float(p.score), "summary": p.research_summary,
-         "trend_rationale": p.trend_rationale, "strengths": p.technical_strengths,
-         "gaps": p.analysis_gaps, "components": p.score_components}
+        {
+            "tool_id": str(p.tool_id),
+            "score": float(p.score),
+            "summary": p.research_summary,
+            "trend_rationale": p.trend_rationale,
+            "strengths": p.technical_strengths,
+            "gaps": p.analysis_gaps,
+            "components": p.score_components,
+            **extras_by_tid.get(str(p.tool_id), {}),
+        }
         for p in profiles
     ]}
     profiles_created = len(profiles)

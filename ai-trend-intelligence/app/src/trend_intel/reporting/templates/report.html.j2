@@ -9,101 +9,258 @@
 </head>
 <body>
 
-{# ── 1. COVER PAGE ── #}
+{# ── COVER ── #}
 <div class="cover">
-  <div class="badge">Premium Research Report</div>
-  <h1>{{ title }}</h1>
-  <p class="subtitle">AI Trend Intelligence Platform</p>
-  <div class="meta">
-    Generated: {{ generated_at }}<br>
-    Run ID: {{ run_id }}<br>
-    Tools Analyzed: {{ tool_count }}<br>
-    Data Sources: {{ source_count }}
+  <div class="badge">Technology Intelligence Report</div>
+
+  <p class="cover-title"><strong>{{ title }}</strong></p>
+  <p class="cover-subtitle">AI Trend Intelligence Platform &mdash; In-Depth Analysis</p>
+
+  <hr class="cover-rule">
+
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ tool_count }}</span>
+      <span class="cover-stat-label">Tools Analyzed</span>
+    </div>
+    <div class="cover-stat">
+      <span class="cover-stat-value">{{ source_count }}</span>
+      <span class="cover-stat-label">Data Sources</span>
+    </div>
+  </div>
+
+  <div class="cover-meta">
+    Generated {{ generated_at }} &bull; Run {{ run_id }}
   </div>
 </div>
 
-{# ── 2. EXECUTIVE SUMMARY ── #}
+{# ── TABLE OF CONTENTS ── #}
+<div class="toc section" id="table-of-contents">
+  <h2>Contents</h2>
+
+  <div class="toc-group">
+    <div class="toc-group-label">Overview</div>
+    <div class="toc-entry"><span class="toc-num">1</span><a href="#executive-summary">Executive Summary</a></div>
+    <div class="toc-entry"><span class="toc-num">2</span><a href="#trend-analysis">Technology Trend Analysis</a></div>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">Tool Profiles</div>
+    {% for profile in tool_profiles %}
+    <div class="toc-entry">
+      <span class="toc-num">{{ loop.index + 2 }}</span>
+      <a href="#tool-{{ loop.index }}">{{ profile.canonical_name }}</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">Analysis &amp; Conclusions</div>
+    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 3 }}</span><a href="#rankings">Rankings &amp; Scores</a></div>
+    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 4 }}</span><a href="#recommendations">Recommendations</a></div>
+    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 5 }}</span><a href="#conclusions">Conclusions</a></div>
+  </div>
+</div>
+
+{# ── EXECUTIVE SUMMARY ── #}
 <div class="section" id="executive-summary">
   <h2>Executive Summary</h2>
   {{ executive_summary | markdown }}
 </div>
 
-{# ── 3. TABLE OF CONTENTS ── #}
-<div class="toc section" id="table-of-contents">
-  <h2>Table of Contents</h2>
-  <ol>
-    <li><a href="#executive-summary">Executive Summary</a></li>
-    <li><a href="#trend-analysis">Trend Analysis</a></li>
-    <li><a href="#tool-profiles">Tool Profiles</a></li>
-    <li><a href="#rankings">Rankings</a></li>
-    <li><a href="#recommendations">Recommendations</a></li>
-    <li><a href="#conclusions">Conclusions</a></li>
-  </ol>
-</div>
-
-{# ── 4. TREND ANALYSIS ── #}
+{# ── TREND ANALYSIS ── #}
 <div class="section" id="trend-analysis">
-  <h2>Trend Analysis</h2>
+  <h2>Technology Trend Analysis</h2>
   {{ trend_analysis | markdown }}
 </div>
 
-{# ── 5. TOOL PROFILES ── #}
+{# ── TOOL PROFILES ── #}
 <div class="section" id="tool-profiles">
   <h2>Tool Profiles</h2>
+  <p class="section-intro">
+    Detailed analysis of {{ tool_count }} trending technologies, ranked by composite score.
+    Each profile covers the tool's purpose, why it is gaining traction, technical merits and
+    limitations, competitive context, and recommended use cases.
+  </p>
+
   {% for profile in tool_profiles %}
-  <div class="tool-card">
-    <div class="tool-name">#{{ loop.index }}. {{ profile.canonical_name }}</div>
-    <span class="score-badge">Score: {{ profile.score }}</span>
-    <p><strong>Category:</strong> {{ profile.category or "Technology" }}</p>
+  <div class="tool-entry" id="tool-{{ loop.index }}">
+
+    {# Header #}
+    <div class="tool-header">
+      <span class="tool-index">#{{ "%02d" | format(loop.index) }}</span>
+      <span class="tool-name">{{ profile.canonical_name }}</span>
+      <span class="tool-score-badge">{{ profile.score }}&nbsp;/&nbsp;100</span>
+    </div>
+
+    {# Category + maturity + positioning tags #}
+    <div>
+      <span class="tag tag-category">{{ profile.category }}</span>
+      {% if profile.maturity %}
+        {% set mat = profile.maturity | lower %}
+        {% if "established" in mat or "production" in mat or "stable" in mat or "ga" in mat %}
+          <span class="tag tag-maturity-established">{{ profile.maturity | title }}</span>
+        {% elif "emerging" in mat or "beta" in mat %}
+          <span class="tag tag-maturity-emerging">{{ profile.maturity | title }}</span>
+        {% elif "experimental" in mat or "alpha" in mat %}
+          <span class="tag tag-maturity-experimental">{{ profile.maturity | title }}</span>
+        {% else %}
+          <span class="tag tag-maturity-default">{{ profile.maturity | title }}</span>
+        {% endif %}
+      {% endif %}
+      {% if profile.positioning %}
+        <span class="tag tag-position">{{ profile.positioning | replace('-', ' ') | title }}</span>
+      {% endif %}
+    </div>
+
+    {# Score visualisation #}
+    <div class="score-block">
+      <div class="score-row">
+        <span class="score-row-label">Overall Score</span>
+        <div class="score-track">
+          <span class="score-fill" style="width: {{ profile.score }}%"></span>
+        </div>
+        <span class="score-val">{{ profile.score }}</span>
+      </div>
+      {% if profile.components %}
+      <hr class="score-divider">
+      {% for dim_key, dim_val in profile.components.items() if dim_key not in ["composite", "version"] %}
+      <div class="score-row">
+        <span class="score-row-label">{{ dim_key | replace('_', ' ') | title }}</span>
+        <div class="score-track">
+          <span class="score-fill" style="width: {{ (dim_val.raw or 0) | round(1) }}%"></span>
+        </div>
+        <span class="score-val">{{ (dim_val.raw or 0) | int }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    {# Overview #}
+    <div class="subsec">Overview</div>
     <p>{{ profile.research_summary }}</p>
-    {% if profile.technical_strengths %}
-    <p><strong>Key Strengths:</strong></p>
-    <ul>{% for s in profile.technical_strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+
+    {# Key Features (if available and overview is short) #}
+    {% if profile.key_features %}
+    <p><strong>Key capabilities:</strong></p>
+    <ul>
+      {% for f in profile.key_features %}<li>{{ f }}</li>{% endfor %}
+    </ul>
     {% endif %}
-    {% if profile.technical_weaknesses %}
-    <p><strong>Limitations:</strong></p>
-    <ul>{% for w in profile.technical_weaknesses %}<li>{{ w }}</li>{% endfor %}</ul>
+
+    {# Why It's Trending #}
+    {% if profile.trend_rationale and profile.trend_rationale != "[Analysis unavailable]" %}
+    <div class="subsec">Why It&rsquo;s Trending</div>
+    <p>{{ profile.trend_rationale }}</p>
+    {% if profile.momentum_assessment %}
+    <p><strong>Momentum:</strong> {{ profile.momentum_assessment }}</p>
     {% endif %}
-    <p><em>{{ profile.trend_rationale }}</em></p>
+    {% if profile.drivers %}
+    <p><strong>Key drivers:</strong></p>
+    <ul>{% for d in profile.drivers %}<li>{{ d }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% endif %}
+
+    {# Technical Analysis — strengths + weaknesses side by side #}
+    {% if profile.technical_strengths or profile.technical_weaknesses %}
+    <div class="subsec">Technical Analysis</div>
+    <table class="sw-table">
+      <tr>
+        {% if profile.technical_strengths %}
+        <td>
+          <p class="sw-col-heading">Strengths</p>
+          <ul class="sw-list strengths">
+            {% for s in profile.technical_strengths %}<li>{{ s }}</li>{% endfor %}
+          </ul>
+        </td>
+        {% endif %}
+        {% if profile.technical_weaknesses %}
+        <td>
+          <p class="sw-col-heading">Limitations</p>
+          <ul class="sw-list weaknesses">
+            {% for w in profile.technical_weaknesses %}<li>{{ w }}</li>{% endfor %}
+          </ul>
+        </td>
+        {% endif %}
+      </tr>
+    </table>
+    {% if profile.justification %}
+    <p><em>{{ profile.justification }}</em></p>
+    {% endif %}
+    {% endif %}
+
+    {# Competitive Landscape #}
+    {% if profile.competitors %}
+    <div class="subsec">Competitive Landscape</div>
+    {% if profile.differentiation %}
+    <p>{{ profile.differentiation }}</p>
+    {% endif %}
+    <ul class="competitor-list">
+      {% for comp in profile.competitors %}
+      <li>
+        <span class="competitor-name">{{ comp.name }}</span>
+        {% if comp.how_it_compares %} &mdash; {{ comp.how_it_compares }}{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {# Use Cases #}
+    {% if profile.primary_use_cases %}
+    <div class="subsec">Ideal For</div>
+    <div>
+      {% for uc in profile.primary_use_cases %}
+      <span class="use-case-chip">{{ uc }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Homepage #}
     {% if profile.homepage_url %}
-    <p>More: <a href="{{ profile.homepage_url }}">{{ profile.homepage_url }}</a></p>
+    <div class="tool-url">
+      Website: <a href="{{ profile.homepage_url }}">{{ profile.homepage_url }}</a>
+    </div>
     {% endif %}
+
   </div>
   {% endfor %}
 </div>
 
-{# ── 6. RANKINGS ── #}
+{# ── RANKINGS ── #}
 <div class="section" id="rankings">
-  <h2>Rankings</h2>
-  <table>
+  <h2>Rankings &amp; Scores</h2>
+  <table class="rankings-table">
     <thead>
       <tr>
-        <th>Rank</th>
+        <th>#</th>
         <th>Tool</th>
-        <th>Score</th>
         <th>Category</th>
+        <th>Score</th>
       </tr>
     </thead>
     <tbody>
       {% for entry in rankings %}
       <tr>
-        <td>{{ entry.rank }}</td>
-        <td>{{ entry.canonical_name }}</td>
-        <td>{{ entry.score }}</td>
-        <td>{{ entry.category or "—" }}</td>
+        <td><span class="rank-num">{{ entry.rank }}</span></td>
+        <td><span class="rank-tool">{{ entry.canonical_name }}</span></td>
+        <td>{{ entry.category }}</td>
+        <td>
+          <span class="rank-score">{{ entry.score }}</span>
+          <span class="mini-track"><span class="mini-fill" style="width: {{ entry.score }}%"></span></span>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-{# ── 7. RECOMMENDATIONS ── #}
+{# ── RECOMMENDATIONS ── #}
 <div class="section" id="recommendations">
   <h2>Recommendations</h2>
   {{ recommendations | markdown }}
 </div>
 
-{# ── 8. CONCLUSIONS ── #}
+{# ── CONCLUSIONS ── #}
 <div class="section" id="conclusions">
   <h2>Conclusions</h2>
   {{ conclusions | markdown }}
