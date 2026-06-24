@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-trendintel}
+      POSTGRES_USER: ${POSTGRES_USER:-trendintel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trendintel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./app
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-trendintel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-trendintel}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_DEFAULT_MODEL: ${OPENROUTER_DEFAULT_MODEL:-anthropic/claude-3-haiku}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      AGENT_CONCURRENCY: ${AGENT_CONCURRENCY:-3}
+      AGENT_MAX_RETRIES: ${AGENT_MAX_RETRIES:-3}
+      REVIEW_MAX_ATTEMPTS: ${REVIEW_MAX_ATTEMPTS:-3}
+      REVIEW_PASS_THRESHOLD: ${REVIEW_PASS_THRESHOLD:-7}
+      POPULARITY_THRESHOLD: ${POPULARITY_THRESHOLD:-10}
+      TOP_N: ${TOP_N:-15}
+      API_KEY: ${API_KEY:-}
+      # Optional source credentials
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID:-}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
+      REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-TrendIntel/1.0}
+      PRODUCTHUNT_TOKEN: ${PRODUCTHUNT_TOKEN:-}
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import httpx; httpx.get('http://localhost:8000/health').raise_for_status()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678}
+      GENERIC_TIMEZONE: ${TIMEZONE:-UTC}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - internal
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  n8n_data:
+
+networks:
+  internal:
+    driver: bridge

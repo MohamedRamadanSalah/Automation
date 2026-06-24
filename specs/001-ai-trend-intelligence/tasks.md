@@ -24,13 +24,13 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 **Purpose**: Project initialization and container scaffolding
 
-- [ ] T001 Create the repository structure per plan.md: `app/src/trend_intel/{core,db,models,schemas,discovery,collection,validation,agents,reporting,history,orchestration,api}/`, `app/tests/{contract,integration,unit}/`, `n8n/workflows/`, `db/init/`, `storage/reports/` (with `.gitkeep` files)
-- [ ] T002 Initialize the Python project in `app/pyproject.toml` (Python 3.12) with dependencies: fastapi, uvicorn[standard], pydantic, pydantic-settings, sqlalchemy[asyncio], asyncpg, alembic, httpx, openai, rapidfuzz, feedparser, trafilatura, selectolax, weasyprint, jinja2, markdown-it-py, tenacity, structlog; dev: pytest, pytest-asyncio, respx
-- [ ] T003 [P] Create `app/Dockerfile` (`python:3.12-slim`, system deps for WeasyPrint — libpango/cairo/gdk-pixbuf, non-root `appuser`, uvicorn entrypoint)
-- [ ] T004 [P] Create `docker-compose.yml` with services `api` (build app/, port 127.0.0.1:8000), `n8n` (`n8nio/n8n`, port 127.0.0.1:5678, basic auth + encryption key env), `postgres` (`postgres:16`, named volume); shared `storage/` bind mount into api; private network
-- [ ] T005 [P] Create `.env.example` with all non-secret keys + placeholder secret keys (OPENROUTER_API_KEY, OPENROUTER_DEFAULT_MODEL, POSTGRES_*, N8N_*, optional source creds, AGENT_CONCURRENCY, AGENT_MAX_RETRIES, REVIEW_MAX_ATTEMPTS, REVIEW_PASS_THRESHOLD, POPULARITY_THRESHOLD, TOP_N)
-- [ ] T006 [P] Configure ruff + mypy in `app/pyproject.toml`
-- [ ] T007 [P] Create `.gitignore` (`.env`, `storage/reports/*`, `__pycache__`, `.pytest_cache`, `*.pyc`)
+- [x] T001 Create the repository structure per plan.md: `app/src/trend_intel/{core,db,models,schemas,discovery,collection,validation,agents,reporting,history,orchestration,api}/`, `app/tests/{contract,integration,unit}/`, `n8n/workflows/`, `db/init/`, `storage/reports/` (with `.gitkeep` files)
+- [x] T002 Initialize the Python project in `app/pyproject.toml` (Python 3.12) with dependencies: fastapi, uvicorn[standard], pydantic, pydantic-settings, sqlalchemy[asyncio], asyncpg, alembic, httpx, openai, rapidfuzz, feedparser, trafilatura, selectolax, weasyprint, jinja2, markdown-it-py, tenacity, structlog; dev: pytest, pytest-asyncio, respx
+- [x] T003 [P] Create `app/Dockerfile` (`python:3.12-slim`, system deps for WeasyPrint — libpango/cairo/gdk-pixbuf, non-root `appuser`, uvicorn entrypoint)
+- [x] T004 [P] Create `docker-compose.yml` with services `api` (build app/, port 127.0.0.1:8000), `n8n` (`n8nio/n8n`, port 127.0.0.1:5678, basic auth + encryption key env), `postgres` (`postgres:16`, named volume); shared `storage/` bind mount into api; private network
+- [x] T005 [P] Create `.env.example` with all non-secret keys + placeholder secret keys (OPENROUTER_API_KEY, OPENROUTER_DEFAULT_MODEL, POSTGRES_*, N8N_*, optional source creds, AGENT_CONCURRENCY, AGENT_MAX_RETRIES, REVIEW_MAX_ATTEMPTS, REVIEW_PASS_THRESHOLD, POPULARITY_THRESHOLD, TOP_N)
+- [x] T006 [P] Configure ruff + mypy in `app/pyproject.toml`
+- [x] T007 [P] Create `.gitignore` (`.env`, `storage/reports/*`, `__pycache__`, `.pytest_cache`, `*.pyc`)
 
 ---
 
