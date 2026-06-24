@@ -79,7 +79,11 @@ class BaseAgent(Generic[T]):
                     temperature=0.2,
                     max_tokens=self.max_tokens,
                 )
+                if not response.choices:
+                    raise AgentError(f"Agent {self.role} received empty choices from API")
                 raw = response.choices[0].message.content or "{}"
+                if not raw.strip():
+                    raise AgentError(f"Agent {self.role} received empty content from API")
                 parsed = _extract_json(raw)
                 result = _coerce_to_schema(parsed, self.output_schema)
                 log.info("agent_success", role=self.role, attempt=attempt)
@@ -93,7 +97,7 @@ class BaseAgent(Generic[T]):
                         f"{user_content}\n\n[CORRECTION] Previous response did not match the required JSON schema. "
                         f"Return ONLY a valid JSON object. Error: {exc}"
                     )
-            except APIError as exc:
+            except (APIError, AgentError) as exc:
                 last_error = exc
                 log.warning("agent_api_error", role=self.role, attempt=attempt, error=str(exc))
                 if attempt > max_retries:
