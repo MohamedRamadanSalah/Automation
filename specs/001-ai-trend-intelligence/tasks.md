@@ -40,21 +40,21 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Implement `app/src/trend_intel/config.py` — pydantic-settings `Settings` loading all env keys (DB URL, OpenRouter, thresholds, concurrency, review loop params)
-- [ ] T009 [P] Implement `app/src/trend_intel/core/logging.py` — structlog setup with a **secret-redaction processor** that masks known secret keys/values (FR-027, SC-011)
-- [ ] T010 [P] Implement `app/src/trend_intel/core/errors.py` — domain exceptions + FastAPI exception handlers returning the `Error` schema
-- [ ] T011 [P] Implement `app/src/trend_intel/core/retry.py` — tenacity-based bounded retry helper with backoff (FR-025)
-- [ ] T012 Implement `app/src/trend_intel/db/base.py` (DeclarativeBase) and `db/session.py` (async engine + session factory + `get_session` dependency)
-- [ ] T013 [P] Create ORM models `discovery_sources.py`, `candidates.py`, `tools.py` in `app/src/trend_intel/models/` per data-model.md
-- [ ] T014 [P] Create ORM models `runs.py`, `run_steps.py` in `app/src/trend_intel/models/` per data-model.md
-- [ ] T015 [P] Create ORM models `reports.py`, `tool_profiles.py`, `rankings.py` in `app/src/trend_intel/models/` per data-model.md
-- [ ] T016 [P] Create ORM models `scoring_methods.py`, `agent_configs.py` in `app/src/trend_intel/models/` per data-model.md
-- [ ] T017 Initialize Alembic in `app/migrations/` and author the baseline migration creating all 10 tables with indexes + UNIQUE constraints, and seed `scoring_methods` `v1` (weights 0.30/0.30/0.25/0.15) — depends on T013–T016
-- [ ] T018 [P] Implement shared Pydantic DTOs in `app/src/trend_intel/schemas/` (Error, Health, Run, RunStep, RunDetail, StageResult) per contracts/openapi.yaml
-- [ ] T019 Implement `app/src/trend_intel/main.py` — FastAPI app factory, lifespan (DB connect), router mounting, and `GET /health` (db up/down) per openapi.yaml
-- [ ] T020 [P] Implement `app/src/trend_intel/core/security.py` — optional API-key dependency stub (no-op when unset) for mutating endpoints
-- [ ] T021 Implement `app/src/trend_intel/orchestration/run_service.py` — create run, `runs` state transitions, and `run_steps` start/finish/fail helpers with redacted detail (FR-017, SC-013) — depends on T014, T012
-- [ ] T022 [P] Implement `app/src/trend_intel/agents/openrouter_client.py` (OpenAI SDK → OpenRouter base_url) and `agents/base.py` `BaseAgent` (JSON mode, Pydantic-validated output, corrective re-prompt + bounded retry) per contracts/agents.md (FR-017a, SC-012) — depends on T011, T008
+- [x] T008 Implement `app/src/trend_intel/config.py` — pydantic-settings `Settings` loading all env keys (DB URL, OpenRouter, thresholds, concurrency, review loop params)
+- [x] T009 [P] Implement `app/src/trend_intel/core/logging.py` — structlog setup with a **secret-redaction processor** that masks known secret keys/values (FR-027, SC-011)
+- [x] T010 [P] Implement `app/src/trend_intel/core/errors.py` — domain exceptions + FastAPI exception handlers returning the `Error` schema
+- [x] T011 [P] Implement `app/src/trend_intel/core/retry.py` — tenacity-based bounded retry helper with backoff (FR-025)
+- [x] T012 Implement `app/src/trend_intel/db/base.py` (DeclarativeBase) and `db/session.py` (async engine + session factory + `get_session` dependency)
+- [x] T013 [P] Create ORM models `discovery_sources.py`, `candidates.py`, `tools.py` in `app/src/trend_intel/models/` per data-model.md
+- [x] T014 [P] Create ORM models `runs.py`, `run_steps.py` in `app/src/trend_intel/models/` per data-model.md
+- [x] T015 [P] Create ORM models `reports.py`, `tool_profiles.py`, `rankings.py` in `app/src/trend_intel/models/` per data-model.md
+- [x] T016 [P] Create ORM models `scoring_methods.py`, `agent_configs.py` in `app/src/trend_intel/models/` per data-model.md
+- [x] T017 Initialize Alembic in `app/migrations/` and author the baseline migration creating all 10 tables with indexes + UNIQUE constraints, and seed `scoring_methods` `v1` (weights 0.30/0.30/0.25/0.15) — depends on T013–T016
+- [x] T018 [P] Implement shared Pydantic DTOs in `app/src/trend_intel/schemas/` (Error, Health, Run, RunStep, RunDetail, StageResult) per contracts/openapi.yaml
+- [x] T019 Implement `app/src/trend_intel/main.py` — FastAPI app factory, lifespan (DB connect), router mounting, and `GET /health` (db up/down) per openapi.yaml
+- [x] T020 [P] Implement `app/src/trend_intel/core/security.py` — optional API-key dependency stub (no-op when unset) for mutating endpoints
+- [x] T021 Implement `app/src/trend_intel/orchestration/run_service.py` — create run, `runs` state transitions, and `run_steps` start/finish/fail helpers with redacted detail (FR-017, SC-013) — depends on T014, T012
+- [x] T022 [P] Implement `app/src/trend_intel/agents/openrouter_client.py` (OpenAI SDK → OpenRouter base_url) and `agents/base.py` `BaseAgent` (JSON mode, Pydantic-validated output, corrective re-prompt + bounded retry) per contracts/agents.md (FR-017a, SC-012) — depends on T011, T008
 
 **Checkpoint**: Foundation ready — schema migrates, app boots, `/health` passes, run/step tracking + agent base exist.
 
