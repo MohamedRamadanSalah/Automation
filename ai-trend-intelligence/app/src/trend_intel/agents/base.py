@@ -53,6 +53,7 @@ class BaseAgent(Generic[T]):
     role: str
     system_prompt: str
     output_schema: type[T]
+    max_tokens: int = 1000  # override per agent for larger outputs
 
     def __init__(self) -> None:
         self._settings = get_settings()
@@ -76,7 +77,7 @@ class BaseAgent(Generic[T]):
                         {"role": "user", "content": user_content},
                     ],
                     temperature=0.2,
-                    max_tokens=1000,
+                    max_tokens=self.max_tokens,
                 )
                 raw = response.choices[0].message.content or "{}"
                 parsed = _extract_json(raw)
