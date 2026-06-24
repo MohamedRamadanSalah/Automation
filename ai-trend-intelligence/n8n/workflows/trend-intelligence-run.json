@@ -1,5 +1,8 @@
 {
-  "name": "trend-intelligence-run",
+  "id": "trend-intel-pipeline",
+  "name": "AI Trend Intelligence Pipeline",
+  "active": false,
+  "versionId": "a1b2c3d4-0000-0000-0000-000000000001",
   "nodes": [
     {
       "parameters": {
