@@ -1,0 +1,470 @@
+openapi: 3.1.0
+info:
+  title: AI Trend Intelligence Platform API
+  version: 0.1.0
+  description: >
+    FastAPI service for the AI Trend Intelligence Platform. Exposes (a) granular
+    stage endpoints invoked by the n8n orchestration workflow, (b) run lifecycle
+    + status endpoints, and (c) report/tool history query endpoints. Single-operator
+    local deployment; all ports bound to localhost. An optional API-key dependency
+    guards mutating endpoints so auth can be enabled if ever exposed.
+servers:
+  - url: http://localhost:8000
+    description: Local (host)
+  - url: http://api:8000
+    description: In-cluster (called by n8n via service DNS)
+
+tags:
+  - name: health
+  - name: runs
+  - name: stages
+  - name: reports
+  - name: tools
+  - name: config
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness/readiness probe
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /runs:
+    post:
+      tags: [runs]
+      summary: Create a new run (manual or scheduled trigger entrypoint)
+      description: Creates a run record in `pending`. n8n then drives the stages. A `mode=local` option executes the full pipeline in a background task for dev.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunCreate' }
+      responses:
+        '201':
+          description: Run created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+    get:
+      tags: [runs]
+      summary: List runs (most recent first)
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/RunStatus' } }
+      responses:
+        '200':
+          description: Runs
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Run' } }
+
+  /runs/{run_id}:
+    get:
+      tags: [runs]
+      summary: Get run status with per-step detail
+      parameters: [ { $ref: '#/components/parameters/RunId' } ]
+      responses:
+        '200':
+          description: Run with steps
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /runs/{run_id}/discover:
+    post:
+      tags: [stages]
+      summary: Stage 1 — run discovery across enabled sources
+      description: Returns candidate counts and records skipped sources. Continues if a source fails (FR-002).
+      parameters: [ { $ref: '#/components/parameters/RunId' } ]
+      responses:
+        '200':
+          description: Discovery result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StageResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /runs/{run_id}/validate:
+    post:
+      tags: [stages]
+      summary: Stage 2 — dedup, quality, popularity, source verification
+      description: Produces the validated tool set. May terminate the run as `no_trends` (FR-026).
+      parameters: [ { $ref: '#/components/parameters/RunId' } ]
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /runs/{run_id}/analyze:
+    post:
+      tags: [stages]
+      summary: Stage 3 — dispatch AI agents per validated tool + rank
+      description: >
+        Runs Research, Trend, Technical, Comparison, Ranking agents per tool
+        (concurrency-bounded), isolating per-tool failures (FR-011). Computes
+        four-dimension scores and the ranking (FR-008/009).
+      parameters: [ { $ref: '#/components/parameters/RunId' } ]
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StageResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /runs/{run_id}/report:
+    post:
+      tags: [stages]
+      summary: Stage 4 — assemble Markdown, quality-review loop, export PDF, persist
+      description: >
+        Report Writer assembles sections; Quality Reviewer runs a bounded
+        revise→re-review loop (FR-010); Markdown is saved (FR-012), PDF rendered
+        (FR-013) with Markdown retained on PDF failure (FR-014); report persisted.
+      parameters: [ { $ref: '#/components/parameters/RunId' } ]
+      responses:
+        '200':
+          description: Report generated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Report' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reports:
+    get:
+      tags: [reports]
+      summary: List reports (most recent first)
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses:
+        '200':
+          description: Reports
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Report' } }
+
+  /reports/{report_id}:
+    get:
+      tags: [reports]
+      summary: Get report metadata + tool profiles + ranking
+      parameters: [ { $ref: '#/components/parameters/ReportId' } ]
+      responses:
+        '200':
+          description: Report detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reports/{report_id}/pdf:
+    get:
+      tags: [reports]
+      summary: Download the rendered PDF
+      parameters: [ { $ref: '#/components/parameters/ReportId' } ]
+      responses:
+        '200':
+          description: PDF stream
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: PDF not available (generation failed; Markdown still exists)
+
+  /reports/compare:
+    get:
+      tags: [reports]
+      summary: Compare two reports — new, dropped, and rank-changed tools (FR-020, SC-008)
+      parameters:
+        - { name: base_id, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: target_id, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Comparison
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportComparison' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /tools/{tool_id}/history:
+    get:
+      tags: [tools]
+      summary: A tool's appearance history across reports with score per report (FR-019)
+      parameters: [ { $ref: '#/components/parameters/ToolId' } ]
+      responses:
+        '200':
+          description: Tool history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ToolHistory' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /config/agents:
+    get:
+      tags: [config]
+      summary: Get per-role model overrides (FR-022)
+      responses:
+        '200':
+          description: Agent configs
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/AgentConfig' } }
+    put:
+      tags: [config]
+      summary: Set a role's model override
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgentConfig' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentConfig' }
+
+  /config/sources:
+    get:
+      tags: [config]
+      summary: List discovery sources (FR-023)
+      responses:
+        '200':
+          description: Sources
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/DiscoverySource' } }
+    post:
+      tags: [config]
+      summary: Add/enable a discovery source via configuration (FR-023)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DiscoverySource' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoverySource' }
+
+components:
+  parameters:
+    RunId: { name: run_id, in: path, required: true, schema: { type: string, format: uuid } }
+    ReportId: { name: report_id, in: path, required: true, schema: { type: string, format: uuid } }
+    ToolId: { name: tool_id, in: path, required: true, schema: { type: string, format: uuid } }
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok] }
+        db: { type: string, enum: [up, down] }
+        version: { type: string }
+
+    RunStatus:
+      type: string
+      enum: [pending, discovering, validating, analyzing, reporting, exporting, succeeded, partial, no_trends, failed]
+
+    RunCreate:
+      type: object
+      properties:
+        trigger_type: { type: string, enum: [scheduled, manual], default: manual }
+        mode: { type: string, enum: [orchestrated, local], default: orchestrated, description: "local runs full pipeline in a background task (dev)" }
+        overrides:
+          type: object
+          description: Optional per-run config (top_n, popularity_threshold)
+          additionalProperties: true
+
+    Run:
+      type: object
+      required: [id, trigger_type, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        trigger_type: { type: string, enum: [scheduled, manual] }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        outcome: { type: string, enum: [report_generated, no_trends, failed], nullable: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+        skipped_sources: { type: array, items: { type: string } }
+        failure_reason: { type: string, nullable: true }
+        report_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    RunStep:
+      type: object
+      required: [step, status, attempts]
+      properties:
+        step: { type: string }
+        status: { type: string, enum: [pending, running, succeeded, failed, skipped] }
+        attempts: { type: integer }
+        detail: { type: object, additionalProperties: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+
+    RunDetail:
+      allOf:
+        - $ref: '#/components/schemas/Run'
+        - type: object
+          properties:
+            steps: { type: array, items: { $ref: '#/components/schemas/RunStep' } }
+
+    StageResult:
+      type: object
+      required: [run_id, step, status]
+      properties:
+        run_id: { type: string, format: uuid }
+        step: { type: string }
+        status: { type: string, enum: [succeeded, failed, skipped] }
+        counts: { type: object, additionalProperties: { type: integer } }
+        skipped_sources: { type: array, items: { type: string } }
+        message: { type: string }
+
+    ValidationResult:
+      allOf:
+        - $ref: '#/components/schemas/StageResult'
+        - type: object
+          properties:
+            validated_tool_count: { type: integer }
+            excluded:
+              type: array
+              items:
+                type: object
+                properties:
+                  raw_name: { type: string }
+                  reason: { type: string }
+            no_trends: { type: boolean, description: "true ⇒ run terminates as no_trends (FR-026)" }
+
+    Report:
+      type: object
+      required: [id, run_id, title, generated_at, status, markdown_path, pdf_status, sections]
+      properties:
+        id: { type: string, format: uuid }
+        run_id: { type: string, format: uuid }
+        title: { type: string }
+        generated_at: { type: string, format: date-time }
+        status: { type: string, enum: [succeeded, partial, failed] }
+        markdown_path: { type: string }
+        pdf_path: { type: string, nullable: true }
+        pdf_status: { type: string, enum: [generated, failed, pending] }
+        sections: { type: array, items: { type: string } }
+        summary: { type: string, nullable: true }
+        review_notes: { type: array, items: { type: string } }
+
+    ToolProfile:
+      type: object
+      required: [tool_id, canonical_name, research_summary, trend_rationale, score, score_components]
+      properties:
+        tool_id: { type: string, format: uuid }
+        canonical_name: { type: string }
+        research_summary: { type: string }
+        trend_rationale: { type: string }
+        technical_strengths: { type: array, items: { type: string } }
+        technical_weaknesses: { type: array, items: { type: string } }
+        comparison: { type: object, additionalProperties: true }
+        score: { type: number }
+        score_components: { $ref: '#/components/schemas/ScoreComponents' }
+        analysis_gaps: { type: array, items: { type: string } }
+
+    ScoreComponents:
+      type: object
+      properties:
+        popularity: { type: number }
+        momentum: { type: number }
+        technical_merit: { type: number }
+        source_credibility: { type: number }
+      description: Each value is the normalized 0–100 dimension contribution (R8)
+
+    RankingEntry:
+      type: object
+      properties:
+        rank: { type: integer }
+        tool_id: { type: string, format: uuid }
+        canonical_name: { type: string }
+        score: { type: number }
+
+    ReportDetail:
+      allOf:
+        - $ref: '#/components/schemas/Report'
+        - type: object
+          properties:
+            ranking: { type: array, items: { $ref: '#/components/schemas/RankingEntry' } }
+            profiles: { type: array, items: { $ref: '#/components/schemas/ToolProfile' } }
+
+    ReportComparison:
+      type: object
+      properties:
+        base_id: { type: string, format: uuid }
+        target_id: { type: string, format: uuid }
+        new_tools: { type: array, items: { $ref: '#/components/schemas/RankingEntry' } }
+        dropped_tools: { type: array, items: { $ref: '#/components/schemas/RankingEntry' } }
+        rank_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              tool_id: { type: string, format: uuid }
+              canonical_name: { type: string }
+              base_rank: { type: integer }
+              target_rank: { type: integer }
+              delta: { type: integer }
+
+    ToolHistory:
+      type: object
+      properties:
+        tool_id: { type: string, format: uuid }
+        canonical_name: { type: string }
+        first_seen_at: { type: string, format: date-time }
+        appearances:
+          type: array
+          items:
+            type: object
+            properties:
+              report_id: { type: string, format: uuid }
+              generated_at: { type: string, format: date-time }
+              rank: { type: integer }
+              score: { type: number }
+
+    AgentConfig:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [research, trend, technical, comparison, ranking, report_writer, quality_reviewer]
+        model: { type: string, nullable: true, description: "null ⇒ shared default model" }
+        params: { type: object, additionalProperties: true }
+
+    DiscoverySource:
+      type: object
+      required: [key, type, display_name]
+      properties:
+        key: { type: string }
+        type: { type: string, enum: [api, rss, graphql] }
+        display_name: { type: string }
+        enabled: { type: boolean, default: true }
+        config: { type: object, additionalProperties: true, description: "no secrets" }
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string }
+        code: { type: string }
