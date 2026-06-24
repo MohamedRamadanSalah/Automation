@@ -152,14 +152,14 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T059 [P] [US4] Contract test for `GET /reports/compare` and `GET /tools/{id}/history` in `app/tests/contract/test_history.py`
-- [ ] T060 [P] [US4] Integration test: two-report comparison (new/dropped/rank-change) in `app/tests/integration/test_history.py`. MUST also assert that **two runs triggered on the same day produce two distinct, separately stored reports** (no overwrite) and that tool history lists both appearances (FR-021).
+- [x] T059 [P] [US4] Contract test for `GET /reports/compare` and `GET /tools/{id}/history` in `app/tests/contract/test_history.py`
+- [x] T060 [P] [US4] Integration test: two-report comparison (new/dropped/rank-change) in `app/tests/integration/test_history.py`. MUST also assert that **two runs triggered on the same day produce two distinct, separately stored reports** (no overwrite) and that tool history lists both appearances (FR-021).
 
 ### Implementation for User Story 4
 
-- [ ] T061 [US4] Implement tool history query + `GET /tools/{tool_id}/history` in `app/src/trend_intel/history/service.py` + `api/history.py` (FR-019)
-- [ ] T062 [US4] Implement report comparison (new/dropped/rank-delta) + `GET /reports/compare` (FR-020, SC-008) — depends on T061
-- [ ] T063 [US4] Maintain `tools.first_seen_at`/`last_seen_at` on tool upsert during validation (FR-019)
+- [x] T061 [US4] Implement tool history query + `GET /tools/{tool_id}/history` in `app/src/trend_intel/history/service.py` + `api/history.py` (FR-019)
+- [x] T062 [US4] Implement report comparison (new/dropped/rank-delta) + `GET /reports/compare` (FR-020, SC-008) — depends on T061
+- [x] T063 [US4] Maintain `tools.first_seen_at`/`last_seen_at` on tool upsert during validation (FR-019)
 
 **Checkpoint**: Reports become a comparable intelligence asset (SC-008).
 
@@ -173,15 +173,15 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T064 [P] [US5] Contract test for `GET/PUT /config/agents` and `GET/POST /config/sources` in `app/tests/contract/test_config.py`
+- [x] T064 [P] [US5] Contract test for `GET/PUT /config/agents` and `GET/POST /config/sources` in `app/tests/contract/test_config.py`
 
 ### Implementation for User Story 5
 
-- [ ] T065 [P] [US5] Implement agent-config endpoints `GET/PUT /config/agents` + per-role model resolution in `agents/base.py` (override → shared default fallback, FR-022) in `app/src/trend_intel/api/config.py` — depends on T022
-- [ ] T066 [P] [US5] Implement source-config endpoints `GET/POST /config/sources` wired to the registry (FR-023) in `app/src/trend_intel/api/config.py` — depends on T040
-- [ ] T067 [US5] Support per-run overrides (top_n, popularity_threshold) in `RunCreate` and persist `runs.config_snapshot` (FR-024)
-- [ ] T068 [US5] Make schedule cadence configurable in the n8n workflow + document in README (default weekly)
-- [ ] T069 [P] [US5] Write "Add a new discovery source" developer guide in `docs/adding-a-source.md`
+- [x] T065 [P] [US5] Implement agent-config endpoints `GET/PUT /config/agents` + per-role model resolution in `agents/base.py` (override → shared default fallback, FR-022) in `app/src/trend_intel/api/config.py` — depends on T022
+- [x] T066 [P] [US5] Implement source-config endpoints `GET/POST /config/sources` wired to the registry (FR-023) in `app/src/trend_intel/api/config.py` — depends on T040
+- [x] T067 [US5] Support per-run overrides (top_n, popularity_threshold) in `RunCreate` and persist `runs.config_snapshot` (FR-024)
+- [x] T068 [US5] Make schedule cadence configurable in the n8n workflow + document in README (default weekly)
+- [x] T069 [P] [US5] Write "Add a new discovery source" developer guide in `docs/adding-a-source.md`
 
 **Checkpoint**: Platform is configurable and extensible without re-architecting (SC-009).
 
@@ -189,15 +189,15 @@ description: "Task list for AI Trend Intelligence Platform implementation"
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T070 [P] Secret-redaction unit tests (logs/output never contain secrets) in `app/tests/unit/test_redaction.py` (SC-011)
-- [ ] T071 [P] Error-path & retry integration tests (provider failure, malformed agent output, PDF failure) in `app/tests/integration/test_error_paths.py` (SC-007, SC-010, SC-012, SC-013)
-- [ ] T072 Premium template polish pass (typography scale, cover art, header/footer running titles, page numbers) in `reporting/templates/`
-- [ ] T073 [P] Write `README.md` (setup, env, compose up, workflow import) + link design docs
-- [ ] T074 Security hardening: localhost-only port binding, non-root container, URL scheme allowlist + fetch size caps, n8n basic auth (R12)
-- [ ] T075 [P] Verify DB indexes from data-model.md exist; tune `AGENT_CONCURRENCY` defaults (R11)
-- [ ] T076 Ensure structured logging + `run_steps` detail coverage across all stages (SC-013)
+- [x] T070 [P] Secret-redaction unit tests (logs/output never contain secrets) in `app/tests/unit/test_redaction.py` (SC-011)
+- [x] T071 [P] Error-path & retry integration tests (provider failure, malformed agent output, PDF failure) in `app/tests/integration/test_error_paths.py` (SC-007, SC-010, SC-012, SC-013)
+- [x] T072 Premium template polish pass (typography scale, cover art, header/footer running titles, page numbers) in `reporting/templates/`
+- [x] T073 [P] Write `README.md` (setup, env, compose up, workflow import) + link design docs
+- [x] T074 Security hardening: localhost-only port binding, non-root container, URL scheme allowlist + fetch size caps, n8n basic auth (R12)
+- [x] T075 [P] Verify DB indexes from data-model.md exist; tune `AGENT_CONCURRENCY` defaults (R11)
+- [x] T076 Ensure structured logging + `run_steps` detail coverage across all stages (SC-013)
 - [ ] T077 Execute all quickstart.md scenarios A–H and record outcomes
-- [ ] T078 [P] Additional unit tests for source adapters (parsing fixtures) in `app/tests/unit/test_adapters.py`
+- [x] T078 [P] Additional unit tests for source adapters (parsing fixtures) in `app/tests/unit/test_adapters.py`
 
 ---
 
