@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlparse
@@ -78,7 +79,7 @@ class HNAlgoliaAdapter:
                         params={
                             "query": query,
                             "tags": "story",
-                            "numericFilters": f"points>{min_points},created_at_i>{since_ts}",
+                            "numericFilters": json.dumps([f"points>{min_points}", f"created_at_i>{since_ts}"]),
                             "hitsPerPage": per_query,
                         },
                     )

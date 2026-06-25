@@ -15,5 +15,6 @@ def get_openrouter_client() -> AsyncOpenAI:
         _client = AsyncOpenAI(
             api_key=settings.openrouter_api_key,
             base_url=settings.openrouter_base_url,
+            max_retries=0,  # our BaseAgent handles retries; SDK default sleeps on Retry-After which can stall for hours
         )
     return _client
