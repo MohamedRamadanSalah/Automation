@@ -56,7 +56,7 @@
     {% for sec in domain_sections %}
     <div class="toc-entry">
       <span class="toc-num">{{ loop.index + 2 }}</span>
-      <a href="#domain-{{ sec.key }}">{{ sec.label }} <span class="toc-count">({{ sec.items|length }})</span></a>
+      <a href="#domain-{{ sec.key }}">{{ sec.label }} <span class="toc-count">({{ sec.news_items|length }})</span></a>
     </div>
     {% endfor %}
   </div>
@@ -98,7 +98,7 @@
 <div class="section domain-section" id="domain-{{ sec.key }}">
   <h2>{{ sec.label }}</h2>
   <p class="section-intro">
-    {{ sec.items|length }} items discovered across GitHub, Hacker News, Dev.to, and RSS feeds.
+    {{ sec.news_items|length }} items discovered across GitHub, Hacker News, Dev.to, and RSS feeds.
     Items are ranked by popularity signal (stars, points, or reactions).
   </p>
 
@@ -111,7 +111,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in sec.items %}
+      {% for item in sec.news_items %}
       <tr>
         <td class="disc-rank">{{ loop.index }}</td>
         <td class="disc-name">

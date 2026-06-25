@@ -150,7 +150,7 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
         {
             "key": domain,
             "label": domain_labels.get(domain, domain.replace("_", " ").title()),
-            "items": items[:25],
+            "news_items": items[:25],
         }
         for domain, items in domain_news.items()
         if items
@@ -166,7 +166,7 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
         "conclusions": conclusions,
         "tool_count": len(tool_contexts),
         "source_count": 5,
-        "total_discoveries": sum(len(s["items"]) for s in domain_sections),
+        "total_discoveries": sum(len(s["news_items"]) for s in domain_sections),
         "domain_sections": domain_sections,
         "tool_profiles": [
             {
