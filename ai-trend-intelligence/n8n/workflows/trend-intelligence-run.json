@@ -28,11 +28,13 @@
     },
     {
       "parameters": {
+        "method": "POST",
         "url": "http://api:8000/runs",
         "sendBody": true,
+        "specifyBody": "keypair",
         "bodyParameters": {
           "parameters": [
-            { "name": "trigger_type", "value": "={{ $json.trigger_type || 'scheduled' }}" }
+            { "name": "trigger_type", "value": "scheduled" }
           ]
         },
         "options": { "timeout": 30000 }
