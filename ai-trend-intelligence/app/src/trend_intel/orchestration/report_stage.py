@@ -166,6 +166,7 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
         "conclusions": conclusions,
         "tool_count": len(tool_contexts),
         "source_count": 5,
+        "total_discoveries": sum(len(s["items"]) for s in domain_sections),
         "domain_sections": domain_sections,
         "tool_profiles": [
             {

@@ -11,17 +11,23 @@
 
 {# ── COVER ── #}
 <div class="cover">
-  <div class="badge">Technology Intelligence Report</div>
+  <div class="badge">Multi-Domain Technology Intelligence Report</div>
 
   <p class="cover-title"><strong>{{ title }}</strong></p>
-  <p class="cover-subtitle">AI Trend Intelligence Platform &mdash; In-Depth Analysis</p>
+  <p class="cover-subtitle">
+    AI Engineering &bull; Flutter &bull; .NET &bull; Systems Design &bull; Software Engineering &bull; Job Market
+  </p>
 
   <hr class="cover-rule">
 
   <div class="cover-stats">
     <div class="cover-stat">
+      <span class="cover-stat-value">{{ total_discoveries }}</span>
+      <span class="cover-stat-label">Items Discovered</span>
+    </div>
+    <div class="cover-stat">
       <span class="cover-stat-value">{{ tool_count }}</span>
-      <span class="cover-stat-label">Tools Analyzed</span>
+      <span class="cover-stat-label">Deep Profiles</span>
     </div>
     <div class="cover-stat">
       <span class="cover-stat-value">{{ source_count }}</span>
@@ -44,11 +50,23 @@
     <div class="toc-entry"><span class="toc-num">2</span><a href="#trend-analysis">Technology Trend Analysis</a></div>
   </div>
 
+  {% if domain_sections %}
   <div class="toc-group">
-    <div class="toc-group-label">Tool Profiles</div>
-    {% for profile in tool_profiles %}
+    <div class="toc-group-label">Domain Discovery</div>
+    {% for sec in domain_sections %}
     <div class="toc-entry">
       <span class="toc-num">{{ loop.index + 2 }}</span>
+      <a href="#domain-{{ sec.key }}">{{ sec.label }} <span class="toc-count">({{ sec.items|length }})</span></a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="toc-group">
+    <div class="toc-group-label">Deep-Analysis Profiles</div>
+    {% for profile in tool_profiles %}
+    <div class="toc-entry">
+      <span class="toc-num">{{ (domain_sections|length) + loop.index + 2 }}</span>
       <a href="#tool-{{ loop.index }}">{{ profile.canonical_name }}</a>
     </div>
     {% endfor %}
@@ -56,9 +74,10 @@
 
   <div class="toc-group">
     <div class="toc-group-label">Analysis &amp; Conclusions</div>
-    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 3 }}</span><a href="#rankings">Rankings &amp; Scores</a></div>
-    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 4 }}</span><a href="#recommendations">Recommendations</a></div>
-    <div class="toc-entry"><span class="toc-num">{{ tool_profiles|length + 5 }}</span><a href="#conclusions">Conclusions</a></div>
+    {% set base = (domain_sections|length) + (tool_profiles|length) + 3 %}
+    <div class="toc-entry"><span class="toc-num">{{ base }}</span><a href="#rankings">Rankings &amp; Scores</a></div>
+    <div class="toc-entry"><span class="toc-num">{{ base + 1 }}</span><a href="#recommendations">Recommendations</a></div>
+    <div class="toc-entry"><span class="toc-num">{{ base + 2 }}</span><a href="#conclusions">Conclusions</a></div>
   </div>
 </div>
 
@@ -74,13 +93,56 @@
   {{ trend_analysis | markdown }}
 </div>
 
-{# ── TOOL PROFILES ── #}
-<div class="section" id="tool-profiles">
-  <h2>Tool Profiles</h2>
+{# ── DOMAIN DISCOVERY SECTIONS ── #}
+{% for sec in domain_sections %}
+<div class="section domain-section" id="domain-{{ sec.key }}">
+  <h2>{{ sec.label }}</h2>
   <p class="section-intro">
-    Detailed analysis of {{ tool_count }} trending technologies, ranked by composite score.
-    Each profile covers the tool's purpose, why it is gaining traction, technical merits and
-    limitations, competitive context, and recommended use cases.
+    {{ sec.items|length }} items discovered across GitHub, Hacker News, Dev.to, and RSS feeds.
+    Items are ranked by popularity signal (stars, points, or reactions).
+  </p>
+
+  <table class="discovery-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name / Title</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in sec.items %}
+      <tr>
+        <td class="disc-rank">{{ loop.index }}</td>
+        <td class="disc-name">
+          {% if item.url %}
+          <a href="{{ item.url }}">{{ item.name }}</a>
+          {% else %}
+          {{ item.name }}
+          {% endif %}
+          {% if item.description %}
+          <div class="disc-desc">{{ item.description[:120] }}</div>
+          {% endif %}
+        </td>
+        <td class="disc-score">
+          <span class="mini-track">
+            <span class="mini-fill" style="width: {{ [item.score, 100] | min }}%"></span>
+          </span>
+          {{ item.score | int }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+{# ── DEEP-ANALYSIS TOOL PROFILES ── #}
+<div class="section" id="tool-profiles">
+  <h2>Deep-Analysis Profiles</h2>
+  <p class="section-intro">
+    Full multi-agent analysis of {{ tool_count }} tools selected from across all domains,
+    ranked by composite score covering popularity, momentum, technical merit, and source credibility.
   </p>
 
   {% for profile in tool_profiles %}
@@ -93,7 +155,7 @@
       <span class="tool-score-badge">{{ profile.score }}&nbsp;/&nbsp;100</span>
     </div>
 
-    {# Category + maturity + positioning tags #}
+    {# Tags #}
     <div>
       <span class="tag tag-category">{{ profile.category }}</span>
       {% if profile.maturity %}
@@ -140,12 +202,9 @@
     <div class="subsec">Overview</div>
     <p>{{ profile.research_summary }}</p>
 
-    {# Key Features (if available and overview is short) #}
     {% if profile.key_features %}
     <p><strong>Key capabilities:</strong></p>
-    <ul>
-      {% for f in profile.key_features %}<li>{{ f }}</li>{% endfor %}
-    </ul>
+    <ul>{% for f in profile.key_features %}<li>{{ f }}</li>{% endfor %}</ul>
     {% endif %}
 
     {# Why It's Trending #}
@@ -161,7 +220,7 @@
     {% endif %}
     {% endif %}
 
-    {# Technical Analysis — strengths + weaknesses side by side #}
+    {# Technical Analysis #}
     {% if profile.technical_strengths or profile.technical_weaknesses %}
     <div class="subsec">Technical Analysis</div>
     <table class="sw-table">
@@ -208,18 +267,11 @@
     {# Use Cases #}
     {% if profile.primary_use_cases %}
     <div class="subsec">Ideal For</div>
-    <div>
-      {% for uc in profile.primary_use_cases %}
-      <span class="use-case-chip">{{ uc }}</span>
-      {% endfor %}
-    </div>
+    <div>{% for uc in profile.primary_use_cases %}<span class="use-case-chip">{{ uc }}</span>{% endfor %}</div>
     {% endif %}
 
-    {# Homepage #}
     {% if profile.homepage_url %}
-    <div class="tool-url">
-      Website: <a href="{{ profile.homepage_url }}">{{ profile.homepage_url }}</a>
-    </div>
+    <div class="tool-url">Website: <a href="{{ profile.homepage_url }}">{{ profile.homepage_url }}</a></div>
     {% endif %}
 
   </div>
@@ -231,12 +283,7 @@
   <h2>Rankings &amp; Scores</h2>
   <table class="rankings-table">
     <thead>
-      <tr>
-        <th>#</th>
-        <th>Tool</th>
-        <th>Category</th>
-        <th>Score</th>
-      </tr>
+      <tr><th>#</th><th>Tool</th><th>Category</th><th>Score</th></tr>
     </thead>
     <tbody>
       {% for entry in rankings %}
