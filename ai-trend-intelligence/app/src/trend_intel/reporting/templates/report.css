@@ -500,6 +500,61 @@ table.rankings-table tr:last-child td { border-bottom: none; }
   border-radius: 2px;
 }
 
+/* ── Domain discovery table ── */
+table.discovery-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.2em;
+  font-family: Arial, sans-serif;
+  font-size: 9pt;
+}
+table.discovery-table thead tr {
+  border-bottom: 2px solid var(--navy);
+}
+table.discovery-table th {
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--navy);
+  padding: 5px 8px;
+  text-align: left;
+}
+table.discovery-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #ece8e2;
+  vertical-align: top;
+}
+table.discovery-table tr:last-child td { border-bottom: none; }
+.disc-rank {
+  font-size: 8pt;
+  color: var(--muted);
+  width: 24px;
+  text-align: right;
+  white-space: nowrap;
+}
+.disc-name { font-weight: 600; }
+.disc-name a { color: var(--blue); text-decoration: none; }
+.disc-desc {
+  font-weight: 400;
+  font-size: 8pt;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.disc-score {
+  white-space: nowrap;
+  width: 90px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 8.5pt;
+}
+.toc-count {
+  color: var(--muted);
+  font-size: 8pt;
+  font-weight: 400;
+}
+.domain-section { page-break-before: always; }
+
 /* ── Callout boxes (recommendations etc.) ── */
 .callout {
   border-left: 3px solid var(--red);
