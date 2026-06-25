@@ -143,6 +143,19 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
     md_path.write_text(md_text, encoding="utf-8")
 
     # Render PDF
+    domain_news = run.config_snapshot.get("_domain_news", {})
+    domain_labels = run.config_snapshot.get("_domain_labels", {})
+    # Build non-empty domain sections for the template
+    domain_sections = [
+        {
+            "key": domain,
+            "label": domain_labels.get(domain, domain.replace("_", " ").title()),
+            "items": items[:25],
+        }
+        for domain, items in domain_news.items()
+        if items
+    ]
+
     html_context = {
         "title": title,
         "generated_at": now.strftime("%Y-%m-%d %H:%M UTC"),
@@ -152,7 +165,8 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
         "recommendations": recommendations,
         "conclusions": conclusions,
         "tool_count": len(tool_contexts),
-        "source_count": 1,
+        "source_count": 5,
+        "domain_sections": domain_sections,
         "tool_profiles": [
             {
                 "canonical_name": t["canonical_name"],
