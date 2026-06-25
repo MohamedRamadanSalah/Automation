@@ -1,8 +1,8 @@
-"""Dev.to Forem API adapter (T043)."""
+"""Dev.to Forem API adapter — multi-domain tag coverage."""
 from __future__ import annotations
 
+import asyncio
 from typing import Any
-from urllib.parse import urlparse
 
 import httpx
 
@@ -14,37 +14,92 @@ from trend_intel.discovery.base import CandidateDTO
 log = get_logger(__name__)
 
 DEVTO_ARTICLES = "https://dev.to/api/articles"
-_TECH_TAGS = ["ai", "machinelearning", "python", "webdev", "opensource"]
+
+# (tag, category)
+DOMAIN_TAGS: list[tuple[str, str]] = [
+    # AI Engineering
+    ("ai",                  "ai_engineering"),
+    ("machinelearning",     "ai_engineering"),
+    ("llm",                 "ai_engineering"),
+    ("mlops",               "ai_engineering"),
+    # Flutter
+    ("flutter",             "flutter"),
+    ("dart",                "flutter"),
+    # .NET Backend
+    ("dotnet",              "dotnet"),
+    ("csharp",              "dotnet"),
+    # Systems Design
+    ("systemdesign",        "systems_design"),
+    ("architecture",        "systems_design"),
+    # Software Engineering
+    ("programming",         "software_engineering"),
+    ("devops",              "software_engineering"),
+    # Career / Job Market
+    ("career",              "job_market"),
+    ("productivity",        "job_market"),
+]
 
 
 class DevToAdapter:
     key = "devto"
 
     async def fetch(self, config: dict[str, Any]) -> list[CandidateDTO]:
-        limit: int = config.get("limit", 20)
-        timeout: float = config.get("timeout", 15.0)
+        tags: list[tuple[str, str]] = config.get("tags", DOMAIN_TAGS)
+        per_tag: int = config.get("per_tag", 8)
+        timeout: float = config.get("timeout", 20.0)
 
-        try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                candidates: list[CandidateDTO] = []
-                for tag in _TECH_TAGS[:3]:
-                    try:
-                        resp = await client.get(DEVTO_ARTICLES, params={"tag": tag, "top": 7, "per_page": limit // len(_TECH_TAGS) + 1})
-                        resp.raise_for_status()
-                        for article in resp.json():
-                            title = article.get("title", "")
-                            url = article.get("url", "")
-                            candidates.append(CandidateDTO(
-                                raw_name=title[:100],
+        seen_ids: set[int] = set()
+        candidates: list[CandidateDTO] = []
+
+        async def _fetch_tag(tag: str, category: str) -> list[CandidateDTO]:
+            try:
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    resp = await client.get(
+                        DEVTO_ARTICLES,
+                        params={"tag": tag, "top": 7, "per_page": per_tag},
+                    )
+                    resp.raise_for_status()
+                    results = []
+                    for article in resp.json():
+                        art_id = article.get("id")
+                        if art_id in seen_ids:
+                            continue
+                        seen_ids.add(art_id)
+                        reactions = article.get("public_reactions_count") or 0
+                        title = (article.get("title") or "").strip()[:150]
+                        url = article.get("url", "")
+                        if not title:
+                            continue
+                        results.append(
+                            CandidateDTO(
+                                raw_name=title,
                                 source_key=self.key,
                                 url=url,
                                 canonical_domain="dev.to",
-                                raw_signals={"reactions": article.get("public_reactions_count", 0), "comments": article.get("comments_count", 0), "tag": tag},
+                                raw_signals={
+                                    "score": reactions,
+                                    "reactions": reactions,
+                                    "comments": article.get("comments_count") or 0,
+                                    "tag": tag,
+                                    "category": category,
+                                },
                                 discovered_at=utcnow(),
-                            ))
-                    except Exception as exc:
-                        log.warning("devto_tag_error", tag=tag, error=str(exc))
-                log.info("devto_fetched", count=len(candidates))
-                return candidates
+                            )
+                        )
+                    return results
+            except Exception as exc:
+                log.warning("devto_tag_error", tag=tag, error=str(exc))
+                return []
+
+        try:
+            for i in range(0, len(tags), 4):
+                batch = tags[i : i + 4]
+                batch_results = await asyncio.gather(*[_fetch_tag(t, c) for t, c in batch])
+                for results in batch_results:
+                    candidates.extend(results)
+                await asyncio.sleep(0.3)
+
+            log.info("devto_fetched", count=len(candidates))
+            return candidates
         except Exception as exc:
             raise SourceError(f"Dev.to fetch failed: {exc}") from exc

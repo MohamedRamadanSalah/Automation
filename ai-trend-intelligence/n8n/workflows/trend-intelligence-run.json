@@ -31,12 +31,8 @@
         "method": "POST",
         "url": "http://api:8000/runs",
         "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "trigger_type", "value": "scheduled" }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"trigger_type\": \"scheduled\",\n  \"config_override\": {{ JSON.stringify($json.config_override || {}) }}\n}",
         "options": { "timeout": 30000 }
       },
       "id": "create-run",
@@ -51,7 +47,7 @@
       "parameters": {
         "url": "=http://api:8000/runs/{{ $json.id }}/discover",
         "method": "POST",
-        "options": { "timeout": 120000 }
+        "options": { "timeout": 300000 }
       },
       "id": "discover",
       "name": "Discover",

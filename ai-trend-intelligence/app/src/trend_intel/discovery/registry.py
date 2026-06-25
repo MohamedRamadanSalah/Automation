@@ -8,6 +8,7 @@ from trend_intel.discovery.base import SourceAdapter
 from trend_intel.discovery.sources.devto import DevToAdapter
 from trend_intel.discovery.sources.github import GitHubAdapter
 from trend_intel.discovery.sources.hackernews import HackerNewsAdapter
+from trend_intel.discovery.sources.hn_algolia import HNAlgoliaAdapter
 from trend_intel.discovery.sources.producthunt import ProductHuntAdapter
 from trend_intel.discovery.sources.reddit import RedditAdapter
 from trend_intel.discovery.sources.rss import RSSAdapter
@@ -16,6 +17,7 @@ log = get_logger(__name__)
 
 _BUILTIN_ADAPTERS: dict[str, SourceAdapter] = {
     "hackernews": HackerNewsAdapter(),
+    "hn_algolia": HNAlgoliaAdapter(),
     "github": GitHubAdapter(),
     "reddit": RedditAdapter(),
     "devto": DevToAdapter(),
