@@ -1,11 +1,12 @@
 """BaseAgent — JSON mode, Pydantic-validated output, corrective re-prompt + bounded retry (FR-017a, SC-012)."""
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from typing import Any, Generic, TypeVar
 
-from openai import APIError
+from openai import APIError, RateLimitError
 from pydantic import BaseModel, ValidationError
 
 from trend_intel.agents.openrouter_client import get_openrouter_client
@@ -62,8 +63,23 @@ class BaseAgent(Generic[T]):
     def _model(self) -> str:
         return self._settings.openrouter_default_model
 
+    # OpenRouter rejects a "models" fallback array longer than this.
+    MAX_FALLBACK_CHAIN = 3
+
+    def _extra_body(self) -> dict[str, Any]:
+        """OpenRouter fallback routing: on 429/error, roll to the next free model."""
+        fallbacks = self._settings.fallback_model_list
+        if not fallbacks:
+            return {}
+        # Primary first, then the ordered free fallbacks (dedup, preserve order).
+        chain = [self._model(), *fallbacks]
+        seen: set[str] = set()
+        ordered = [m for m in chain if not (m in seen or seen.add(m))]
+        # OpenRouter caps the array at 3 entries; a longer list is a hard 400.
+        return {"models": ordered[: self.MAX_FALLBACK_CHAIN]}
+
     async def run(self, user_content: str) -> T:
-        """Call OpenRouter, validate output, bounded retry."""
+        """Call OpenRouter, validate output, bounded retry with backoff on rate limits."""
         max_retries = self._settings.agent_max_retries
         last_error: Exception | None = None
 
@@ -78,6 +94,7 @@ class BaseAgent(Generic[T]):
                     ],
                     temperature=0.2,
                     max_tokens=self.max_tokens,
+                    extra_body=self._extra_body(),
                 )
                 if not response.choices:
                     raise AgentError(f"Agent {self.role} received empty choices from API")
@@ -97,6 +114,15 @@ class BaseAgent(Generic[T]):
                         f"{user_content}\n\n[CORRECTION] Previous response did not match the required JSON schema. "
                         f"Return ONLY a valid JSON object. Error: {exc}"
                     )
+            except RateLimitError as exc:
+                # Free-tier models rate-limit constantly. Back off (bounded) before retry
+                # so the whole fallback chain has time to recover. Capped so a run never
+                # stalls for more than a few seconds per attempt.
+                last_error = exc
+                log.warning("agent_rate_limited", role=self.role, attempt=attempt, error=str(exc))
+                if attempt > max_retries:
+                    break
+                await asyncio.sleep(min(2 ** attempt, 8))
             except (APIError, AgentError) as exc:
                 last_error = exc
                 log.warning("agent_api_error", role=self.role, attempt=attempt, error=str(exc))

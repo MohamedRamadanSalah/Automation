@@ -54,7 +54,10 @@ class ProductHuntAdapter:
                         source_key=self.key,
                         url=edge["node"].get("website") or edge["node"].get("url"),
                         canonical_domain=None,
-                        raw_signals={"votes": edge["node"].get("votesCount", 0)},
+                        raw_signals={
+                            "score": edge["node"].get("votesCount", 0),
+                            "votes": edge["node"].get("votesCount", 0),
+                        },
                         discovered_at=utcnow(),
                     )
                     for edge in edges

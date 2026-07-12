@@ -16,7 +16,7 @@ from trend_intel.agents.research_agent import ResearchAgent
 from trend_intel.agents.technical_agent import TechnicalAgent
 from trend_intel.agents.trend_agent import TrendAgent
 from trend_intel.core.logging import get_logger
-from trend_intel.core.scoring import SCORING_VERSION, compute_score, popularity_from_signals
+from trend_intel.core.scoring import SCORING_VERSION, compute_score, popularity_from_signals, raw_popularity
 from trend_intel.models.candidates import Candidate
 from trend_intel.models.tool_profiles import ToolProfile
 from trend_intel.models.tools import Tool
@@ -64,14 +64,8 @@ def _infer_domain(canonical_domain: str | None, signals: dict) -> str:
 
 
 def _candidate_popularity(signals: dict) -> float:
-    return float(
-        signals.get("score")
-        or signals.get("stars")
-        or signals.get("upvotes")
-        or signals.get("points")
-        or signals.get("reactions")
-        or 0
-    )
+    # Single source of truth shared with validation & scoring (core.scoring.raw_popularity).
+    return raw_popularity(signals)
 
 
 async def run_analyze(run_id: uuid.UUID, session: AsyncSession) -> StageResult:

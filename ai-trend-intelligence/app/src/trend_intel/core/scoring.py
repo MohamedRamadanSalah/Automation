@@ -43,11 +43,27 @@ def compute_score(
     return Decimal(str(round(composite, 2))), components
 
 
+# All popularity-like signal keys any discovery source may emit. Kept in ONE place so
+# validation (exclusion), analysis (selection), and scoring never disagree on how popular
+# a candidate is — a mismatch here silently drops trending items ("too few results").
+POPULARITY_SIGNAL_KEYS = ("score", "stars", "upvotes", "points", "reactions", "votes")
+
+
+def raw_popularity(raw_signals: dict[str, Any] | None) -> float:
+    """Return the highest popularity-like signal value as a float (0 if none present)."""
+    if not raw_signals:
+        return 0.0
+    best = 0.0
+    for key in POPULARITY_SIGNAL_KEYS:
+        val = raw_signals.get(key)
+        if isinstance(val, (int, float)):
+            best = max(best, float(val))
+    return best
+
+
 def popularity_from_signals(raw_signals: dict[str, Any]) -> float:
-    """Convert raw source signals to a 0–100 popularity score (MVP placeholder)."""
-    score = raw_signals.get("score", raw_signals.get("stars", raw_signals.get("upvotes", 0)))
-    if not isinstance(score, (int, float)):
-        return 50.0
+    """Convert raw source signals to a 0–100 popularity score (log-normalized)."""
+    score = raw_popularity(raw_signals)
     # Log-normalize: 500+ points → ~100, 10 → ~20
     import math
-    return min(100.0, max(0.0, math.log1p(float(score)) / math.log1p(500) * 100))
+    return min(100.0, max(0.0, math.log1p(score) / math.log1p(500) * 100))

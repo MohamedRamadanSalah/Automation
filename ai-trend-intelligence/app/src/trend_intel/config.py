@@ -10,8 +10,25 @@ class Settings(BaseSettings):
 
     # OpenRouter
     openrouter_api_key: str = Field(..., description="sk-or-... key")
-    openrouter_default_model: str = Field("anthropic/claude-3-haiku", description="Shared LLM model id")
+    openrouter_default_model: str = Field(
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        description="Primary LLM model id (strongest verified free model)",
+    )
+    # Comma-separated ordered list of free fallback models. OpenRouter routes to the
+    # next one automatically when the primary is rate-limited (429) or errors.
+    openrouter_fallback_models: str = Field(
+        "nvidia/nemotron-3-super-120b-a12b:free,"
+        "openai/gpt-oss-120b:free,"
+        "meta-llama/llama-3.3-70b-instruct:free,"
+        "qwen/qwen3-next-80b-a3b-instruct:free,"
+        "nousresearch/hermes-3-llama-3.1-405b:free",
+        description="Ordered comma-separated free fallback model ids",
+    )
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
+    @property
+    def fallback_model_list(self) -> list[str]:
+        return [m.strip() for m in self.openrouter_fallback_models.split(",") if m.strip()]
 
     # API auth (optional — empty string disables check)
     api_key: str = ""

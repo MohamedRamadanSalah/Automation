@@ -5,10 +5,11 @@ import re
 import uuid
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select # type: ignore
+from sqlalchemy.ext.asyncio import AsyncSession # type: ignore
 
 from trend_intel.core.logging import get_logger
+from trend_intel.core.scoring import raw_popularity
 from trend_intel.core.utils import utcnow
 from trend_intel.models.candidates import Candidate
 from trend_intel.models.tools import Tool
@@ -16,10 +17,11 @@ from trend_intel.models.tools import Tool
 log = get_logger(__name__)
 
 
+
 def _fuzzy_match(norm: str, seen: dict[str, "Tool"], threshold: int = 90) -> str | None:
     """Return the matching key from seen if rapidfuzz token_sort_ratio >= threshold."""
     try:
-        from rapidfuzz.fuzz import token_sort_ratio
+        from rapidfuzz.fuzz import token_sort_ratio # type: ignore
         for key in seen:
             if token_sort_ratio(norm, key) >= threshold:
                 return key
@@ -54,11 +56,12 @@ async def validate_candidates(
     now = utcnow()
 
     for c in candidates:
-        # Popularity threshold
-        score = c.raw_signals.get("score", c.raw_signals.get("stars", c.raw_signals.get("upvotes", 0)))
-        if isinstance(score, (int, float)) and score < popularity_threshold:
+        # Popularity threshold — read every popularity-like signal key (score/stars/
+        # upvotes/points/reactions/votes) so items from any source are judged consistently.
+        score = raw_popularity(c.raw_signals)
+        if score < popularity_threshold:
             c.validation_status = "excluded"
-            c.exclusion_reason = f"popularity {score} < threshold {popularity_threshold}"
+            c.exclusion_reason = f"popularity {score:g} < threshold {popularity_threshold}"
             excluded.append(c)
             continue
 
