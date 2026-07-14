@@ -115,10 +115,18 @@ class BaseAgent(Generic[T]):
                         f"Return ONLY a valid JSON object. Error: {exc}"
                     )
             except RateLimitError as exc:
-                # Free-tier models rate-limit constantly. Back off (bounded) before retry
+                last_error = exc
+                if "per-day" in str(exc):
+                    # Account-wide daily free quota, not a per-model/per-minute limit —
+                    # every model in the fallback chain shares it, so retrying (or trying
+                    # another free model) cannot succeed again until the daily reset.
+                    # Fail immediately instead of burning more of tomorrow's... today's
+                    # already-exhausted quota on retries that are guaranteed to repeat.
+                    log.warning("agent_daily_quota_exhausted", role=self.role, attempt=attempt, error=str(exc))
+                    break
+                # Transient per-minute rate limit. Back off (bounded) before retry
                 # so the whole fallback chain has time to recover. Capped so a run never
                 # stalls for more than a few seconds per attempt.
-                last_error = exc
                 log.warning("agent_rate_limited", role=self.role, attempt=attempt, error=str(exc))
                 if attempt > max_retries:
                     break
