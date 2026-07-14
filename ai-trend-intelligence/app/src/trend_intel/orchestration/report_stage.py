@@ -1,6 +1,7 @@
 """Report stage — assemble MD + quality review + PDF + persist (T036)."""
 from __future__ import annotations
 
+import shutil
 import uuid
 from pathlib import Path
 
@@ -199,6 +200,21 @@ async def run_report(run_id: uuid.UUID, session: AsyncSession) -> StageResult:
     html = render_html(html_context)
     pdf_path = storage_dir / "report.pdf"
     pdf_ok = render_pdf(html, pdf_path)
+
+    # Copy finished files to the host-visible export folder (best-effort only).
+    # Internal storage (above) is the source of truth the API serves from — this is
+    # purely a convenience copy so the operator can find report.md/report.pdf directly
+    # on the host filesystem. A failure here must never fail the run: the report is
+    # already safely persisted in internal storage regardless of this copy's outcome.
+    try:
+        export_dir = Path(settings.export_root) / "reports" / str(run_id)
+        export_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(md_path, export_dir / "report.md")
+        if pdf_ok:
+            shutil.copy2(pdf_path, export_dir / "report.pdf")
+        log.info("report_exported", run_id=str(run_id), export_dir=str(export_dir))
+    except OSError as exc:
+        log.warning("report_export_failed", run_id=str(run_id), error=str(exc))
 
     # Create Report record
     rel_md = f"reports/{run_id}/report.md"
