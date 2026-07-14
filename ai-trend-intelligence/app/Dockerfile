@@ -26,7 +26,12 @@ RUN pip install --no-cache-dir --no-deps .
 COPY alembic.ini ./
 COPY migrations/ ./migrations/
 
-RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+RUN useradd -m -u 1001 appuser \
+    # Pre-create the mount points as appuser-owned directories. A fresh named volume
+    # or bind mount copies this image content (and ownership) in on first mount, so
+    # appuser can write here even before the app itself creates subdirectories.
+    && mkdir -p /app/storage/reports /app/export/reports \
+    && chown -R appuser:appuser /app
 USER appuser
 
 CMD ["uvicorn", "trend_intel.main:app", "--host", "0.0.0.0", "--port", "8000"]
