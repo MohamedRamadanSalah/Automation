@@ -39,8 +39,16 @@ services:
       REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
       REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-TrendIntel/1.0}
       PRODUCTHUNT_TOKEN: ${PRODUCTHUNT_TOKEN:-}
+      EXPORT_ROOT: /app/export
     volumes:
-      - ./storage:/app/storage
+      # Internal working storage — a named volume native to the Docker VM. All report
+      # generation reads/writes happen here; never touches the Windows host filesystem.
+      - app_storage:/app/storage
+      # Export target — the host-visible ./storage folder. Only finished report.md /
+      # report.pdf are copied here once per run (see reporting stage), so the flaky
+      # Windows<->WSL2 bind-mount bridge is touched minimally instead of throughout
+      # the whole run.
+      - ./storage:/app/export
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,6 +82,7 @@ services:
 volumes:
   postgres_data:
   n8n_data:
+  app_storage:
 
 networks:
   internal:

@@ -44,7 +44,14 @@ class Settings(BaseSettings):
     top_n: int = Field(15, ge=1)
 
     # Storage
+    # Internal working storage — a named Docker volume (native to the Linux VM), never
+    # a Windows-host bind mount. Report generation reads/writes here throughout a run.
     storage_root: str = "storage"
+    # Export target — a Windows-host bind-mounted folder (e.g. E:\...\storage on the
+    # host). Only the two finished report files are copied here, once, at the very end
+    # of a run, so the flaky Windows<->WSL2 bridge is touched as little as possible
+    # instead of being the primary read/write path for the whole run lifecycle.
+    export_root: str = "/app/export"
 
     # Logging
     log_level: str = "INFO"
